@@ -18,6 +18,15 @@
             <div class="lobby-step" id="lobbyStep1">
                 <label class="lobby-label">Your Name</label>
                 <input type="text" id="nameInput" class="lobby-input" placeholder="Enter your name" maxlength="16" autocomplete="off">
+                <label class="lobby-label">Token Color</label>
+                <div class="color-picker" id="colorPicker">
+                    <div class="color-swatch selected" data-color="#38bdf8" style="background:#38bdf8" title="Blue"></div>
+                    <div class="color-swatch" data-color="#fb7185" style="background:#fb7185" title="Pink"></div>
+                    <div class="color-swatch" data-color="#4ade80" style="background:#4ade80" title="Green"></div>
+                    <div class="color-swatch" data-color="#a78bfa" style="background:#a78bfa" title="Purple"></div>
+                    <div class="color-swatch" data-color="#fb923c" style="background:#fb923c" title="Orange"></div>
+                    <div class="color-swatch" data-color="#facc15" style="background:#facc15" title="Yellow"></div>
+                </div>
                 <div class="lobby-buttons">
                     <button class="btn btn-gold btn-lg" id="btnCreate">Create Game</button>
                     <button class="btn btn-ghost btn-lg" id="btnJoinShow">Join Game</button>
@@ -98,6 +107,7 @@
                 <div class="controls-col">
                     <button class="btn btn-gold" id="btnNewGame">✦ New</button>
                     <button class="btn btn-ghost" onclick="showRules()">Rules</button>
+                    <button class="btn btn-ghost btn-sm" id="btnToggleView" title="Switch card orientation">🔄 Classic</button>
                     <div class="deck-info"><span id="deckCount">90</span></div>
                 </div>
                 <div class="my-hand-row" id="myHandRow">
@@ -113,37 +123,56 @@
 
     <!-- Rules Modal -->
     <div class="modal-overlay" id="rulesModal">
-        <div class="modal-box">
+        <div class="modal-box rules-modal-box">
             <button class="modal-close" onclick="closeRules()">&times;</button>
-            <h2 class="modal-title">How to Play Sequence</h2>
+            <div class="rules-header-section">
+                <div class="rules-emblem">📖</div>
+                <h2 class="modal-title">How to Play Sequence</h2>
+                <div class="rules-divider"></div>
+            </div>
             <div class="rules-body">
-                <div class="rule-group">
-                    <h3>🎯 Objective</h3>
-                    <p>First to complete <strong>2 sequences</strong> (5 chips in a row — horizontal, vertical, or diagonal).</p>
+                <div class="rule-card">
+                    <div class="rule-icon-circle">🎯</div>
+                    <div class="rule-content">
+                        <h3>Objective</h3>
+                        <p>Be the first to complete <strong>2 sequences</strong> — 5 chips in a row horizontally, vertically, or diagonally.</p>
+                    </div>
                 </div>
-                <div class="rule-group">
-                    <h3>🃏 Gameplay</h3>
-                    <ol>
-                        <li><strong>Click a card</strong> from your hand to select it.</li>
-                        <li><strong>Click a highlighted space</strong> on the board to place your chip.</li>
-                        <li>A new card is drawn automatically. Turn passes.</li>
-                    </ol>
+                <div class="rule-card">
+                    <div class="rule-icon-circle">🎮</div>
+                    <div class="rule-content">
+                        <h3>Gameplay</h3>
+                        <ol>
+                            <li>Select a <strong>card</strong> from your hand</li>
+                            <li>Place your <strong>chip</strong> on a matching board space</li>
+                            <li>A new card is drawn &amp; turn passes automatically</li>
+                        </ol>
+                    </div>
                 </div>
-                <div class="rule-group">
-                    <h3>🃏 Special Jacks</h3>
-                    <p><span class="badge wild-badge">WILD</span> <strong>J♦ / J♣:</strong> Place on <em>any</em> empty space.</p>
-                    <p><span class="badge anti-badge">REMOVE</span> <strong>J♥ / J♠:</strong> Remove opponent's chip.</p>
+                <div class="rule-card">
+                    <div class="rule-icon-circle">🃏</div>
+                    <div class="rule-content">
+                        <h3>Special Jacks</h3>
+                        <div class="jack-info-row"><span class="badge wild-badge">WILD</span> <strong>J♦ / J♣</strong> — Place on <em>any</em> empty space</div>
+                        <div class="jack-info-row"><span class="badge anti-badge">REMOVE</span> <strong>J♥ / J♠</strong> — Remove an opponent's chip</div>
+                    </div>
                 </div>
-                <div class="rule-group">
-                    <h3>⭐ Corners</h3>
-                    <p><strong>★</strong> corners are <strong>free</strong> for both players.</p>
+                <div class="rule-card">
+                    <div class="rule-icon-circle">⭐</div>
+                    <div class="rule-content">
+                        <h3>Free Corners</h3>
+                        <p>The 4 corner <strong>★</strong> spaces count as free for both players.</p>
+                    </div>
                 </div>
-                <div class="rule-group">
-                    <h3>💀 Dead Cards</h3>
-                    <p>If both spaces for a card are taken, click it to exchange (free action).</p>
+                <div class="rule-card">
+                    <div class="rule-icon-circle">💀</div>
+                    <div class="rule-content">
+                        <h3>Dead Cards</h3>
+                        <p>If both spaces for a card are occupied, click it to <strong>exchange</strong> for a new card (free action, no turn cost).</p>
+                    </div>
                 </div>
             </div>
-            <button class="btn btn-gold" onclick="closeRules()">Got it!</button>
+            <button class="btn btn-gold rules-close-btn" onclick="closeRules()">Got it!</button>
         </div>
     </div>
 

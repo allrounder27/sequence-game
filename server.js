@@ -178,7 +178,8 @@ function stateForPlayer(room, playerIdx) {
         winner: g.winner,
         completedSequences: g.completedSequences,
         roomCode: room.code,
-        players: room.players.map(p => p.name)
+        players: room.players.map(p => p.name),
+        playerColors: room.players.map(p => p.color)
     };
 }
 
@@ -190,11 +191,11 @@ io.on('connection', socket => {
     let currentRoom = null;
     let playerIdx   = -1;
 
-    socket.on('createRoom', (name) => {
+    socket.on('createRoom', ({ name, color }) => {
         const code = generateCode();
         const room = {
             code,
-            players: [{ id: socket.id, name: name || 'Player 1' }],
+            players: [{ id: socket.id, name: name || 'Player 1', color: color || '#38bdf8' }],
             game: null
         };
         rooms[code] = room;
@@ -205,12 +206,12 @@ io.on('connection', socket => {
         console.log(`Room ${code} created by ${name}`);
     });
 
-    socket.on('joinRoom', ({ code, name }) => {
+    socket.on('joinRoom', ({ code, name, color }) => {
         code = (code || '').toUpperCase().trim();
         const room = rooms[code];
         if (!room) return socket.emit('error', 'Room not found. Check the code.');
         if (room.players.length >= 2) return socket.emit('error', 'Room is full.');
-        room.players.push({ id: socket.id, name: name || 'Player 2' });
+        room.players.push({ id: socket.id, name: name || 'Player 2', color: color || '#fb7185' });
         currentRoom = code;
         playerIdx = 1;
         socket.join(code);

@@ -9,6 +9,8 @@ let myIndex       = -1;
 let selectedCard  = -1;
 let validMoves    = [];
 let lastState     = null;
+let myColor       = '#38bdf8';
+let isPortraitView = true;
 
 // ── Card Image Helper ───────────────────────────────────────
 function getCardImageUrl(card) {
@@ -45,7 +47,7 @@ const disconnectModal  = $('disconnectModal');
 
 $('btnCreate').addEventListener('click', () => {
     const name = nameInput.value.trim() || 'Player 1';
-    socket.emit('createRoom', name);
+    socket.emit('createRoom', { name, color: myColor });
 });
 
 $('btnJoinShow').addEventListener('click', () => {
@@ -69,7 +71,7 @@ $('btnJoin').addEventListener('click', () => {
         showLobbyError('Enter a 4-letter room code.');
         return;
     }
-    socket.emit('joinRoom', { code, name });
+    socket.emit('joinRoom', { code, name, color: myColor });
 });
 
 codeInput?.addEventListener('keydown', e => {
@@ -100,7 +102,21 @@ function showLobbyError(msg) {
     lobbyError.textContent = msg;
     lobbyError.classList.remove('hidden');
 }
+// ── Color Picker ──────────────────────────────────────────────────────
+document.querySelectorAll('.color-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+        sw.classList.add('selected');
+        myColor = sw.dataset.color;
+    });
+});
 
+// ── Toggle View ─────────────────────────────────────────────────────
+$('btnToggleView').addEventListener('click', () => {
+    isPortraitView = !isPortraitView;
+    gameBoard.classList.toggle('classic-view', !isPortraitView);
+    $('btnToggleView').textContent = isPortraitView ? '🔄 Classic' : '🔄 Portrait';
+});
 // ── Socket Events ───────────────────────────────────────────
 
 socket.on('roomCreated', ({ code, playerIndex }) => {
@@ -146,10 +162,25 @@ socket.on('playerLeft', name => {
 
 // ── Rendering ───────────────────────────────────────────────
 
+function darkenColor(hex, factor = 0.3) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `rgb(${Math.floor(r*factor)}, ${Math.floor(g*factor)}, ${Math.floor(b*factor)})`;
+}
+
 function renderState(state) {
     lastState = state;
     selectedCard = -1;
     validMoves = [];
+
+    // Apply player-chosen colors
+    if (state.playerColors && state.playerColors.length === 2) {
+        document.documentElement.style.setProperty('--p1', state.playerColors[0]);
+        document.documentElement.style.setProperty('--p2', state.playerColors[1]);
+        document.documentElement.style.setProperty('--p1-dark', darkenColor(state.playerColors[0]));
+        document.documentElement.style.setProperty('--p2-dark', darkenColor(state.playerColors[1]));
+    }
 
     renderBoard(state);
     renderMyHand(state);
@@ -213,6 +244,19 @@ function renderMyHand(state) {
         img.src = getCardImageUrl(card);
         img.alt = card;
         div.appendChild(img);
+
+        // Jack labels
+        if (card === 'JD' || card === 'JC') {
+            const label = document.createElement('div');
+            label.className = 'hand-jack-label wild-badge';
+            label.textContent = 'WILD';
+            div.appendChild(label);
+        } else if (card === 'JH' || card === 'JS') {
+            const label = document.createElement('div');
+            label.className = 'hand-jack-label anti-badge';
+            label.textContent = 'REMOVE';
+            div.appendChild(label);
+        }
 
         // Check dead card
         const dead = isCardDead(state.board, card);
