@@ -206,11 +206,27 @@ io.on('connection', socket => {
         console.log(`Room ${code} created by ${name}`);
     });
 
+    // Let the joiner peek at host color before joining
+    socket.on('peekRoom', (code) => {
+        code = (code || '').toUpperCase().trim();
+        const room = rooms[code];
+        if (!room) return socket.emit('error', 'Room not found. Check the code.');
+        if (room.players.length >= 2) return socket.emit('error', 'Room is full.');
+        socket.emit('hostColor', room.players[0].color);
+    });
+
     socket.on('joinRoom', ({ code, name, color }) => {
         code = (code || '').toUpperCase().trim();
         const room = rooms[code];
         if (!room) return socket.emit('error', 'Room not found. Check the code.');
         if (room.players.length >= 2) return socket.emit('error', 'Room is full.');
+        // Prevent same color as host
+        const hostColor = room.players[0].color;
+        if (color === hostColor) {
+            // Auto-pick a different color
+            const fallbacks = ['#38bdf8','#fb7185','#4ade80','#a78bfa','#fb923c','#facc15'];
+            color = fallbacks.find(c => c !== hostColor) || '#fb7185';
+        }
         room.players.push({ id: socket.id, name: name || 'Player 2', color: color || '#fb7185' });
         currentRoom = code;
         playerIdx = 1;

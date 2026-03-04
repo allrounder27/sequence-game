@@ -10,7 +10,7 @@ let selectedCard  = -1;
 let validMoves    = [];
 let lastState     = null;
 let myColor       = '#38bdf8';
-let isPortraitView = true;
+let isHorizontalView = false;
 
 // ── Card Image Helper ───────────────────────────────────────
 function getCardImageUrl(card) {
@@ -56,6 +56,14 @@ $('btnJoinShow').addEventListener('click', () => {
     lobbyJoin.classList.remove('hidden');
     lobbyError.classList.add('hidden');
     setTimeout(() => codeInput.focus(), 100);
+});
+
+// When code is entered, peek the room to get host color
+codeInput?.addEventListener('input', () => {
+    const code = codeInput.value.trim().toUpperCase();
+    if (code.length === 4) {
+        socket.emit('peekRoom', code);
+    }
 });
 
 $('btnBack').addEventListener('click', () => {
@@ -113,13 +121,13 @@ document.querySelectorAll('.color-swatch').forEach(sw => {
 
 // ── Toggle View ─────────────────────────────────────────────────────
 $('btnToggleView').addEventListener('click', () => {
-    isPortraitView = !isPortraitView;
-    gameBoard.classList.toggle('classic-view', !isPortraitView);
-    $('btnToggleView').textContent = isPortraitView ? '🔄 Classic' : '🔄 Portrait';
+    isHorizontalView = !isHorizontalView;
+    gameBoard.classList.toggle('horizontal-view', isHorizontalView);
+    $('btnToggleView').textContent = isHorizontalView ? '🔄 Vertical' : '🔄 Horizontal';
 });
 // ── Socket Events ───────────────────────────────────────────
 
-socket.on('roomCreated', ({ code, playerIndex }) => {
+socket.on('roomCreated', ({ code, playerIndex, hostColor }) => {
     myIndex = playerIndex;
     roomCodeDisplay.textContent = code;
     lobbyStep1.classList.add('hidden');
@@ -129,6 +137,25 @@ socket.on('roomCreated', ({ code, playerIndex }) => {
 
 socket.on('roomJoined', ({ code, playerIndex }) => {
     myIndex = playerIndex;
+});
+
+// When joining, server tells us which color the host picked so we can grey it out
+socket.on('hostColor', (hostColor) => {
+    document.querySelectorAll('.color-swatch').forEach(sw => {
+        sw.classList.remove('taken');
+        if (sw.dataset.color === hostColor) {
+            sw.classList.add('taken');
+            // If joiner had the same color selected, pick a different one
+            if (myColor === hostColor) {
+                const available = document.querySelector('.color-swatch:not(.taken):not(.selected)');
+                if (available) {
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                    available.classList.add('selected');
+                    myColor = available.dataset.color;
+                }
+            }
+        }
+    });
 });
 
 socket.on('error', msg => {
