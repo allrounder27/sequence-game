@@ -1,0 +1,309 @@
+/* ====================== CSS VARIABLES ====================== */
+:root {
+    --bg-dark:     #0b1120;
+    --bg-card:     #131b2e;
+    --bg-surface:  #1a2340;
+    --bg-hover:    #243054;
+    --gold:        #d4a843;
+    --gold-glow:   rgba(212, 168, 67, .35);
+    --p1:          #38bdf8;
+    --p1-dark:     #0c4a6e;
+    --p2:          #fb7185;
+    --p2-dark:     #6e0c2b;
+    --text:        #e8e4dc;
+    --text-dim:    #8892a8;
+    --border:      rgba(212, 168, 67, .18);
+    --radius:      .45rem;
+    --radius-lg:   .85rem;
+    --cell-size:   min(6.8vh, 6.8vw);
+}
+
+/* ====================== RESET / BASE ====================== */
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+html, body {
+    height: 100%; overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+}
+
+/* ====================== LOBBY ====================== */
+.lobby-overlay {
+    position: fixed; inset:0; z-index:1000;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 30%, #1a2340 0%, #0b1120 70%);
+}
+.lobby-box {
+    width: 420px; max-width: 92vw; padding: 2.6rem 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: 0 0 60px rgba(0,0,0,.6), 0 0 30px var(--gold-glow);
+}
+.lobby-title {
+    font-family: 'Cinzel', serif; font-size: 2.4rem; font-weight: 900;
+    color: var(--gold); letter-spacing: .14em;
+}
+.lobby-sub  { color: var(--text-dim); margin: .4rem 0 1.5rem; font-size: .92rem; }
+.lobby-label { display:block; color:var(--text-dim); font-size:.82rem; margin-bottom:.4rem; text-transform:uppercase; letter-spacing:.08em; }
+.lobby-input {
+    width: 100%; padding: .7rem .9rem; margin-bottom: .8rem;
+    background: var(--bg-surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 1rem; outline: none; text-align: center;
+}
+.lobby-input:focus { border-color: var(--gold); box-shadow: 0 0 8px var(--gold-glow); }
+.code-input { font-family: 'Cinzel', serif; font-size: 1.6rem; letter-spacing: .4em; text-transform: uppercase; }
+
+.lobby-buttons { display: flex; gap: .7rem; margin-top: .5rem; }
+.lobby-buttons .btn { flex:1; }
+.lobby-error { color: #ef4444; font-size: .85rem; margin-top: .7rem; }
+.hidden { display: none !important; }
+
+/* Room code display */
+.room-code-display {
+    font-family: 'Cinzel', serif; font-size: 2.8rem; font-weight: 900;
+    color: var(--gold); letter-spacing: .5em;
+    margin: .6rem 0; padding: .5rem;
+    background: var(--bg-surface); border: 1px dashed var(--gold);
+    border-radius: var(--radius);
+}
+.waiting-dots { color: var(--text-dim); font-size: .85rem; margin-top: .7rem; }
+.dots::after { content:''; animation: dots 1.4s steps(4,end) infinite; }
+@keyframes dots { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
+
+/* ====================== BUTTONS ====================== */
+.btn {
+    padding: .55rem 1rem; border: none; border-radius: var(--radius);
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: .85rem;
+    cursor: pointer; transition: all .18s;
+    text-transform: uppercase; letter-spacing: .06em;
+}
+.btn-gold { background: linear-gradient(135deg, var(--gold), #b8902a); color: #0b1120; }
+.btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.btn-ghost {
+    background: transparent; color: var(--gold);
+    border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: rgba(212,168,67,.08); }
+.btn-lg { padding: .7rem 1.3rem; font-size: .92rem; }
+.btn-sm { padding: .38rem .8rem; font-size: .78rem; }
+
+/* ====================== GAME WRAPPER ====================== */
+.game-wrapper {
+    display: flex; flex-direction: column;
+    height: 100vh; width: 100vw;
+}
+
+/* ====================== HEADER ====================== */
+.game-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .35rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.header-left, .header-right { min-width: 180px; }
+.header-right { text-align: right; }
+.header-center { text-align: center; flex:1; }
+.game-title-sm { font-family:'Cinzel',serif; font-size:.95rem; color:var(--gold); letter-spacing:.14em; }
+.turn-row { display:flex; align-items:center; justify-content:center; gap:.4rem; font-size:.78rem; }
+.turn-label { font-weight:600; color: var(--gold); }
+.hdr-sep { color: var(--text-dim); }
+.game-message { color: var(--text-dim); }
+.room-info { font-size:.7rem; color:var(--text-dim); margin-top:.1rem; }
+.room-info span { color:var(--gold); font-weight:700; letter-spacing:.12em; }
+
+.score-box { display:flex; align-items:center; gap:.5rem; }
+.score-chip {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.3);
+}
+.p1-chip { background: var(--p1); box-shadow: 0 0 6px var(--p1); }
+.p2-chip { background: var(--p2); box-shadow: 0 0 6px var(--p2); }
+.score-info { display:flex; flex-direction:column; line-height:1.15; }
+.score-name { font-weight:600; font-size:.78rem; }
+.score-seq  { font-size:.7rem; color:var(--text-dim); }
+.p2-box { flex-direction: row-reverse; }
+
+/* ====================== BOARD ====================== */
+.board-section { flex:1; display:flex; align-items:center; justify-content:center; padding:.3rem; overflow:hidden; }
+.board-frame {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+    background: var(--bg-card);
+    box-shadow: 0 0 40px rgba(0,0,0,.5);
+}
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, var(--cell-size));
+    grid-template-rows: repeat(10, var(--cell-size));
+    gap: 2px;
+}
+.cell {
+    position: relative; width: var(--cell-size); height: var(--cell-size);
+    border-radius: 3px; overflow: hidden;
+    background: var(--bg-surface);
+    cursor: pointer;
+    transition: all .15s;
+}
+.cell img {
+    width: 100%; height: 100%; object-fit: cover;
+    pointer-events: none;
+}
+.cell .corner-star {
+    position: absolute; inset:0;
+    display: flex; align-items:center; justify-content:center;
+    font-size: calc(var(--cell-size) * .45);
+    color: var(--gold); text-shadow: 0 0 8px var(--gold-glow);
+}
+
+/* Chip overlay */
+.cell .chip-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items:center; justify-content:center;
+}
+.chip {
+    width: 55%; height: 55%; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.4);
+    opacity: .92;
+    animation: chipDrop .25s ease-out;
+}
+@keyframes chipDrop { from { transform: scale(0); } to { transform: scale(1); } }
+.chip-p1 { background: var(--p1); box-shadow: 0 0 8px var(--p1); }
+.chip-p2 { background: var(--p2); box-shadow: 0 0 8px var(--p2); }
+.chip-seq { border-width: 3px; border-color: var(--gold); animation: seqGlow 1.5s ease-in-out infinite alternate; }
+@keyframes seqGlow { from { box-shadow: 0 0 8px var(--gold-glow); } to { box-shadow: 0 0 18px var(--gold); } }
+
+/* Highlight for valid moves */
+.cell.valid-move { box-shadow: inset 0 0 0 2px var(--gold), 0 0 12px var(--gold-glow); }
+.cell.valid-move:hover { background: var(--bg-hover); transform: scale(1.06); z-index:2; }
+
+/* Dead card highlight */
+.cell.dead-card-highlight { box-shadow: inset 0 0 0 2px #ef4444, 0 0 12px rgba(239,68,68,.4); }
+
+/* ====================== FOOTER / HANDS ====================== */
+.footer-section {
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    padding: .3rem .6rem;
+}
+.hands-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: .5rem;
+}
+.opponent-hand-info {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 120px;
+}
+.opp-label { font-size:.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.15rem; }
+.opp-cards { display:flex; gap: 2px; }
+.card-back {
+    width: 28px; height: 40px;
+    background: linear-gradient(135deg, #1a3a5c, #0c2340);
+    border: 1px solid #2d5a8a;
+    border-radius: 3px;
+    display: flex; align-items:center; justify-content:center;
+    font-size: .6rem; color: #2d5a8a;
+}
+.card-back::after { content:'✦'; }
+
+.controls-col {
+    display: flex; flex-direction: column; align-items: center; gap: .2rem;
+    padding: 0 .4rem;
+}
+.deck-info { font-size:.65rem; color:var(--text-dim); }
+.deck-info span { color:var(--gold); font-weight:700; }
+
+.my-hand-row { display:flex; align-items:center; gap:.5rem; flex:1; justify-content:center; }
+.hand-label { display:flex; align-items:center; gap:.3rem; font-size:.75rem; font-weight:600; white-space:nowrap; }
+.label-dot { width:10px; height:10px; border-radius:50%; }
+.my-dot { /* set dynamically */ }
+.hand { display:flex; gap:3px; }
+.hand-card {
+    width: calc(var(--cell-size) * .98);
+    height: calc(var(--cell-size) * 1.4);
+    border-radius: 4px; overflow: hidden;
+    cursor: pointer; transition: all .15s;
+    border: 2px solid transparent;
+    position: relative;
+}
+.hand-card img { width:100%; height:100%; object-fit:cover; pointer-events:none; }
+.hand-card:hover { transform: translateY(-4px); border-color: var(--gold); }
+.hand-card.selected { border-color: var(--gold); transform: translateY(-6px); box-shadow: 0 4px 16px var(--gold-glow); }
+.hand-card.dead-card { opacity:.45; }
+.hand-card .dead-x {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; font-weight:900; color:#ef4444;
+    text-shadow: 0 0 4px rgba(239,68,68,.6);
+    pointer-events:none;
+}
+
+/* ====================== MODALS ====================== */
+.modal-overlay {
+    position: fixed; inset:0; z-index:2000;
+    display: none; align-items:center; justify-content:center;
+    background: rgba(0,0,0,.65); backdrop-filter: blur(4px);
+}
+.modal-overlay.active { display:flex; }
+.modal-box {
+    width: 440px; max-width: 92vw; padding: 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: 0 0 60px rgba(0,0,0,.6);
+    max-height: 80vh; overflow-y: auto;
+}
+.modal-close {
+    float:right; background:none; border:none;
+    color: var(--text-dim); font-size:1.5rem; cursor:pointer;
+}
+.modal-close:hover { color:var(--text); }
+.modal-title { font-family:'Cinzel',serif; font-size:1.3rem; color:var(--gold); margin-bottom:1rem; }
+
+/* Rules */
+.rules-body { text-align:left; }
+.rule-group { margin-bottom:.9rem; }
+.rule-group h3 { font-size:.9rem; color:var(--gold); margin-bottom:.25rem; }
+.rule-group p, .rule-group li { font-size:.82rem; color:var(--text-dim); line-height:1.5; }
+.badge {
+    display:inline-block; padding:.1rem .4rem; border-radius:3px;
+    font-size:.7rem; font-weight:700; margin-right:.2rem;
+}
+.wild-badge { background:var(--p1-dark); color:var(--p1); }
+.anti-badge { background:var(--p2-dark); color:var(--p2); }
+
+/* Win */
+.win-box { padding:2.5rem 2rem; }
+.win-trophy { font-size:3rem; margin-bottom:.5rem; }
+.win-title { font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); }
+.win-sub { color:var(--text-dim); margin: .4rem 0 1.2rem; font-size:.9rem; }
+
+/* ====================== CONFETTI ====================== */
+.confetti-container { position:fixed; inset:0; pointer-events:none; z-index:3000; overflow:hidden; }
+.confetti-piece {
+    position:absolute; width:8px; height:18px; border-radius:2px;
+    top:-20px; animation: confettiFall var(--fall-time, 3s) linear forwards;
+}
+@keyframes confettiFall {
+    to { top:110vh; transform: rotateZ(720deg) rotateX(360deg); opacity:0; }
+}
+
+/* ====================== RESPONSIVE ====================== */
+@media (max-height: 720px) {
+    :root { --cell-size: min(5.8vh, 5.8vw); }
+    .game-header { padding: .2rem .7rem; }
+    .footer-section { padding: .2rem .4rem; }
+}
+@media (max-width: 800px) {
+    :root { --cell-size: min(8vw, 6vh); }
+    .header-left, .header-right { min-width:100px; }
+    .score-name { font-size:.7rem; }
+    .hands-row { flex-wrap: wrap; }
+    .opponent-hand-info { min-width: auto; }
+}

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence — Online Multiplayer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- ===== LOBBY SCREEN ===== -->
+    <div class="lobby-overlay" id="lobbyOverlay">
+        <div class="lobby-box">
+            <h1 class="lobby-title">✦ SEQUENCE ✦</h1>
+            <p class="lobby-sub">Online Multiplayer Card Board Game</p>
+
+            <!-- Step 1: Enter name -->
+            <div class="lobby-step" id="lobbyStep1">
+                <label class="lobby-label">Your Name</label>
+                <input type="text" id="nameInput" class="lobby-input" placeholder="Enter your name" maxlength="16" autocomplete="off">
+                <div class="lobby-buttons">
+                    <button class="btn btn-gold btn-lg" id="btnCreate">Create Game</button>
+                    <button class="btn btn-ghost btn-lg" id="btnJoinShow">Join Game</button>
+                </div>
+            </div>
+
+            <!-- Step 2a: Room created, waiting for opponent -->
+            <div class="lobby-step hidden" id="lobbyWaiting">
+                <p class="lobby-label">Share this code with your friend:</p>
+                <div class="room-code-display" id="roomCodeDisplay">----</div>
+                <button class="btn btn-ghost btn-sm" id="btnCopyCode">📋 Copy Code</button>
+                <div class="waiting-dots">
+                    <span>Waiting for opponent</span>
+                    <span class="dots"></span>
+                </div>
+            </div>
+
+            <!-- Step 2b: Join with code -->
+            <div class="lobby-step hidden" id="lobbyJoin">
+                <label class="lobby-label">Enter Room Code</label>
+                <input type="text" id="codeInput" class="lobby-input code-input" placeholder="ABCD" maxlength="4" autocomplete="off">
+                <button class="btn btn-gold btn-lg" id="btnJoin">Join</button>
+                <button class="btn btn-ghost btn-sm" id="btnBack">← Back</button>
+            </div>
+
+            <!-- Error message -->
+            <div class="lobby-error hidden" id="lobbyError"></div>
+        </div>
+    </div>
+
+    <!-- ===== GAME SCREEN ===== -->
+    <div class="game-wrapper hidden" id="gameScreen">
+        <!-- Header -->
+        <header class="game-header">
+            <div class="header-left">
+                <div class="score-box p1-box" id="p1ScoreBox">
+                    <div class="score-chip p1-chip"></div>
+                    <div class="score-info">
+                        <span class="score-name" id="p1Name">Player 1</span>
+                        <span class="score-seq" id="p1Seq">0 / 2</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-center">
+                <h1 class="game-title-sm">✦ SEQUENCE ✦</h1>
+                <div class="turn-row">
+                    <div class="turn-label" id="turnLabel">Waiting...</div>
+                    <span class="hdr-sep">·</span>
+                    <div class="game-message" id="gameMessage">Game starting...</div>
+                </div>
+                <div class="room-info">Room: <span id="roomCodeSmall">----</span></div>
+            </div>
+            <div class="header-right">
+                <div class="score-box p2-box" id="p2ScoreBox">
+                    <div class="score-chip p2-chip"></div>
+                    <div class="score-info">
+                        <span class="score-name" id="p2Name">Player 2</span>
+                        <span class="score-seq" id="p2Seq">0 / 2</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Board -->
+        <main class="board-section">
+            <div class="board-frame">
+                <div class="board" id="gameBoard"></div>
+            </div>
+        </main>
+
+        <!-- Footer: My Hand + Opponent info + Controls -->
+        <footer class="footer-section">
+            <div class="hands-row">
+                <div class="opponent-hand-info" id="opponentHandInfo">
+                    <div class="opp-label">Opponent</div>
+                    <div class="opp-cards" id="oppCards"></div>
+                </div>
+                <div class="controls-col">
+                    <button class="btn btn-gold" id="btnNewGame">✦ New</button>
+                    <button class="btn btn-ghost" onclick="showRules()">Rules</button>
+                    <div class="deck-info"><span id="deckCount">90</span></div>
+                </div>
+                <div class="my-hand-row" id="myHandRow">
+                    <div class="hand-label my-label">
+                        <div class="label-dot my-dot" id="myDot"></div>
+                        <span id="myHandLabel">You</span>
+                    </div>
+                    <div class="hand" id="myHand"></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Rules Modal -->
+    <div class="modal-overlay" id="rulesModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeRules()">&times;</button>
+            <h2 class="modal-title">How to Play Sequence</h2>
+            <div class="rules-body">
+                <div class="rule-group">
+                    <h3>🎯 Objective</h3>
+                    <p>First to complete <strong>2 sequences</strong> (5 chips in a row — horizontal, vertical, or diagonal).</p>
+                </div>
+                <div class="rule-group">
+                    <h3>🃏 Gameplay</h3>
+                    <ol>
+                        <li><strong>Click a card</strong> from your hand to select it.</li>
+                        <li><strong>Click a highlighted space</strong> on the board to place your chip.</li>
+                        <li>A new card is drawn automatically. Turn passes.</li>
+                    </ol>
+                </div>
+                <div class="rule-group">
+                    <h3>🃏 Special Jacks</h3>
+                    <p><span class="badge wild-badge">WILD</span> <strong>J♦ / J♣:</strong> Place on <em>any</em> empty space.</p>
+                    <p><span class="badge anti-badge">REMOVE</span> <strong>J♥ / J♠:</strong> Remove opponent's chip.</p>
+                </div>
+                <div class="rule-group">
+                    <h3>⭐ Corners</h3>
+                    <p><strong>★</strong> corners are <strong>free</strong> for both players.</p>
+                </div>
+                <div class="rule-group">
+                    <h3>💀 Dead Cards</h3>
+                    <p>If both spaces for a card are taken, click it to exchange (free action).</p>
+                </div>
+            </div>
+            <button class="btn btn-gold" onclick="closeRules()">Got it!</button>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div class="modal-overlay" id="winModal">
+        <div class="modal-box win-box">
+            <div class="win-trophy" id="winEmoji">🏆</div>
+            <h2 class="win-title" id="winTitle">You Win!</h2>
+            <p class="win-sub" id="winSubtext">Completed 2 sequences!</p>
+            <button class="btn btn-gold" id="btnPlayAgain">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Disconnected Modal -->
+    <div class="modal-overlay" id="disconnectModal">
+        <div class="modal-box">
+            <h2 class="modal-title">Opponent Disconnected</h2>
+            <p class="lobby-sub">Your opponent left the game.</p>
+            <button class="btn btn-gold" onclick="location.reload()">Back to Lobby</button>
+        </div>
+    </div>
+
+    <!-- Confetti -->
+    <div id="confettiContainer" class="confetti-container"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
