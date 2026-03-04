@@ -15,7 +15,7 @@
     --border:      rgba(212, 168, 67, .18);
     --radius:      .45rem;
     --radius-lg:   .85rem;
-    --cell-size:   min(5.5vh, 5.5vw);
+    --cell-size:   min(4.8vh, 5.5vw);
     --cell-h:      calc(var(--cell-size) * 1.4);
 }
 
@@ -160,6 +160,10 @@ html, body {
     width: 100%; height: 100%; object-fit: contain;
     pointer-events: none;
     background: white;
+    transition: transform .2s;
+}
+.board.horizontal-view .cell img {
+    transform: rotate(90deg);
 }
 .cell .corner-star {
     position: absolute; inset:0;
@@ -174,7 +178,8 @@ html, body {
     display: flex; align-items:center; justify-content:center;
 }
 .chip {
-    width: 55%; height: 55%; border-radius: 50%;
+    width: calc(var(--cell-size) * .55); height: calc(var(--cell-size) * .55);
+    border-radius: 50%;
     border: 2px solid rgba(255,255,255,.4);
     opacity: .92;
     animation: chipDrop .25s ease-out;
@@ -185,14 +190,20 @@ html, body {
 .chip-seq { border-width: 3px; border-color: var(--gold); animation: seqGlow 1.5s ease-in-out infinite alternate; }
 @keyframes seqGlow { from { box-shadow: 0 0 8px var(--gold-glow); } to { box-shadow: 0 0 18px var(--gold); } }
 
-/* Highlight for valid moves — clean border glow, no scale */
+/* Highlight for valid moves — pulsing gold glow */
 .cell.valid-move {
-    box-shadow: inset 0 0 0 2px var(--gold), 0 0 10px var(--gold-glow);
+    box-shadow: inset 0 0 0 3px var(--gold), 0 0 14px var(--gold-glow);
     z-index: 2;
+    animation: validPulse 1s ease-in-out infinite alternate;
+}
+@keyframes validPulse {
+    from { box-shadow: inset 0 0 0 3px var(--gold), 0 0 8px var(--gold-glow); }
+    to   { box-shadow: inset 0 0 0 3px #f0c85a, 0 0 22px rgba(212, 168, 67, .65); }
 }
 .cell.valid-move:hover {
-    box-shadow: inset 0 0 0 3px var(--gold), 0 0 16px rgba(212, 168, 67, .5);
+    box-shadow: inset 0 0 0 3px #f0c85a, 0 0 24px rgba(212, 168, 67, .7);
     z-index: 3;
+    animation: none;
 }
 
 /* Dead card highlight */
@@ -351,7 +362,7 @@ html, body {
 
 /* ====================== RESPONSIVE ====================== */
 @media (max-height: 720px) {
-    :root { --cell-size: min(4.5vh, 5vw); }
+    :root { --cell-size: min(4.2vh, 5vw); }
     .game-header { padding: .2rem .7rem; }
     .footer-section { padding: .2rem .4rem; }
 }
