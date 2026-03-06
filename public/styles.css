@@ -200,18 +200,18 @@ html, body {
 .chip-seq { border-width: 3px; border-color: var(--gold); animation: seqGlow 1.5s ease-in-out infinite alternate; }
 @keyframes seqGlow { from { box-shadow: 0 0 8px var(--gold-glow); } to { box-shadow: 0 0 18px var(--gold); } }
 
-/* Highlight for valid moves — pulsing gold glow */
+/* Highlight for valid moves — bright pulsing glow matching hand-card style */
 .cell.valid-move {
-    box-shadow: inset 0 0 0 3px var(--gold), 0 0 14px var(--gold-glow);
+    box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--gold), 0 0 20px var(--gold), 0 0 40px rgba(212, 168, 67, .4);
     z-index: 2;
-    animation: validPulse 1s ease-in-out infinite alternate;
+    animation: validPulse .9s ease-in-out infinite alternate;
 }
 @keyframes validPulse {
-    from { box-shadow: inset 0 0 0 3px var(--gold), 0 0 8px var(--gold-glow); }
-    to   { box-shadow: inset 0 0 0 3px #f0c85a, 0 0 22px rgba(212, 168, 67, .65); }
+    from { box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--gold), 0 0 16px var(--gold), 0 0 30px rgba(212, 168, 67, .3); }
+    to   { box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px #f0c85a, 0 0 30px #f0c85a, 0 0 60px rgba(212, 168, 67, .5); }
 }
 .cell.valid-move:hover {
-    box-shadow: inset 0 0 0 3px #f0c85a, 0 0 24px rgba(212, 168, 67, .7);
+    box-shadow: inset 0 0 0 3px #fff, 0 0 0 4px #f0c85a, 0 0 35px #f0c85a, 0 0 70px rgba(212, 168, 67, .6);
     z-index: 3;
     animation: none;
 }
