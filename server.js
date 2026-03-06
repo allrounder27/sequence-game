@@ -9,7 +9,12 @@ const path    = require('path');
 
 const app    = express();
 const server = http.createServer(app);
-const io     = new Server(server, { cors: { origin: '*' } });
+const io     = new Server(server, {
+    cors: { origin: '*' },
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    connectTimeout: 45000
+});
 
 const PORT = process.env.PORT || 3000;
 
@@ -328,15 +333,57 @@ io.on('connection', socket => {
         io.to(currentRoom).emit('message', 'New game started!');
     });
 
+    socket.on('rejoinRoom', ({ code, name }) => {
+        code = (code || '').toUpperCase().trim();
+        const room = rooms[code];
+        if (!room || !room.game) return socket.emit('error', 'Room expired. Please start a new game.');
+
+        const idx = room.players.findIndex(p => p.name === name);
+        if (idx === -1) return socket.emit('error', 'Player not found in room.');
+
+        // Clear any pending disconnect timer
+        if (room.disconnectTimers && room.disconnectTimers[idx]) {
+            clearTimeout(room.disconnectTimers[idx]);
+            delete room.disconnectTimers[idx];
+            console.log(`Room ${code}: ${name} reconnected (timer cleared)`);
+        }
+
+        // Update socket id to new connection
+        room.players[idx].id = socket.id;
+        currentRoom = code;
+        playerIdx = idx;
+        socket.join(code);
+
+        // Send current game state
+        io.to(socket.id).emit('gameStart', stateForPlayer(room, idx));
+        io.to(code).emit('message', `${name} reconnected!`);
+    });
+
     socket.on('disconnect', () => {
         if (!currentRoom) return;
         const room = rooms[currentRoom];
         if (!room) return;
+
+        const roomCode = currentRoom;
+        const pIdx = playerIdx;
         const leaving = room.players.find(p => p.id === socket.id);
-        io.to(currentRoom).emit('playerLeft', leaving ? leaving.name : 'Opponent');
-        // Clean up room
-        delete rooms[currentRoom];
-        console.log(`Room ${currentRoom} closed (disconnect)`);
+        const leavingName = leaving ? leaving.name : 'Opponent';
+
+        // Grace period — wait 20 seconds before declaring disconnect
+        room.disconnectTimers = room.disconnectTimers || {};
+
+        // Clear any existing timer for this player
+        if (room.disconnectTimers[pIdx]) clearTimeout(room.disconnectTimers[pIdx]);
+
+        console.log(`Room ${roomCode}: ${leavingName} disconnected, starting 20s grace period...`);
+
+        room.disconnectTimers[pIdx] = setTimeout(() => {
+            const r = rooms[roomCode];
+            if (!r) return;
+            io.to(roomCode).emit('playerLeft', leavingName);
+            delete rooms[roomCode];
+            console.log(`Room ${roomCode} closed (disconnect timeout for ${leavingName})`);
+        }, 20000);
     });
 
     function broadcastState(room) {

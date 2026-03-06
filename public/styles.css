@@ -219,6 +219,19 @@ html, body {
 /* Dead card highlight */
 .cell.dead-card-highlight { box-shadow: inset 0 0 0 2px #ef4444, 0 0 12px rgba(239,68,68,.4); }
 
+/* Card image fallback when CDN fails */
+.card-text-fallback {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+    background: white; color: #333;
+    font-size: .7rem; font-weight: 700;
+    text-align: center;
+    letter-spacing: .02em;
+}
+.hand-card .card-text-fallback {
+    font-size: .85rem;
+}
+
 /* ====================== FOOTER / HANDS ====================== */
 .footer-section {
     flex-shrink: 0;

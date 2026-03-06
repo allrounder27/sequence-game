@@ -11,6 +11,8 @@ let validMoves    = [];
 let lastState     = null;
 let myColor       = '#38bdf8';
 let isHorizontalView = false;
+let myRoomCode    = null;
+let myName        = null;
 
 // ── Card Image Helper ───────────────────────────────────────
 function getCardImageUrl(card) {
@@ -47,6 +49,7 @@ const disconnectModal  = $('disconnectModal');
 
 $('btnCreate').addEventListener('click', () => {
     const name = nameInput.value.trim() || 'Player 1';
+    myName = name;
     socket.emit('createRoom', { name, color: myColor });
 });
 
@@ -79,6 +82,7 @@ $('btnJoin').addEventListener('click', () => {
         showLobbyError('Enter a 4-letter room code.');
         return;
     }
+    myName = name;
     socket.emit('joinRoom', { code, name, color: myColor });
 });
 
@@ -129,6 +133,7 @@ $('btnToggleView').addEventListener('click', () => {
 
 socket.on('roomCreated', ({ code, playerIndex, hostColor }) => {
     myIndex = playerIndex;
+    myRoomCode = code;
     roomCodeDisplay.textContent = code;
     lobbyStep1.classList.add('hidden');
     lobbyWaiting.classList.remove('hidden');
@@ -137,6 +142,7 @@ socket.on('roomCreated', ({ code, playerIndex, hostColor }) => {
 
 socket.on('roomJoined', ({ code, playerIndex }) => {
     myIndex = playerIndex;
+    myRoomCode = code;
 });
 
 // When joining, server tells us which color the host picked so we can grey it out
@@ -185,6 +191,19 @@ socket.on('message', msg => {
 
 socket.on('playerLeft', name => {
     disconnectModal.classList.add('active');
+});
+
+// ── Auto-Rejoin on Reconnect ─────────────────────────────────
+socket.on('connect', () => {
+    // If we were in a game, try to rejoin the room
+    if (myRoomCode && myName && gameScreen && !gameScreen.classList.contains('hidden')) {
+        console.log('Reconnected — attempting rejoin room', myRoomCode);
+        socket.emit('rejoinRoom', { code: myRoomCode, name: myName });
+    }
+});
+
+socket.on('disconnect', () => {
+    console.log('Socket disconnected, will auto-reconnect...');
 });
 
 // ── Rendering ───────────────────────────────────────────────
@@ -239,6 +258,13 @@ function renderBoard(state) {
                 img.src = getCardImageUrl(data.card);
                 img.alt = data.card;
                 img.loading = 'lazy';
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    const fb = document.createElement('div');
+                    fb.className = 'card-text-fallback';
+                    fb.textContent = data.card;
+                    cell.appendChild(fb);
+                };
                 cell.appendChild(img);
             }
 
@@ -270,6 +296,13 @@ function renderMyHand(state) {
         const img = document.createElement('img');
         img.src = getCardImageUrl(card);
         img.alt = card;
+        img.onerror = function() {
+            this.style.display = 'none';
+            const fb = document.createElement('div');
+            fb.className = 'card-text-fallback';
+            fb.textContent = card;
+            div.insertBefore(fb, div.firstChild);
+        };
         div.appendChild(img);
 
         // Jack labels
