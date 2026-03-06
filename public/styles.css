@@ -100,7 +100,7 @@ html, body {
 /* ====================== HEADER ====================== */
 .game-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: .35rem 1rem;
+    padding: .5rem 1rem;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
@@ -141,12 +141,15 @@ html, body {
     display: grid;
     grid-template-columns: repeat(10, var(--cell-size));
     grid-template-rows: repeat(10, var(--cell-h));
-    gap: 2px;
+    gap: 1px;
 }
-/* Horizontal mode: wide cells with rotated card images */
+/* Horizontal mode: bigger cells, rotated card images, no gap */
 .board.horizontal-view {
+    --cell-size: min(6.5vh, 6vw);
+    --cell-h: calc(var(--cell-size) * 1.4);
     grid-template-columns: repeat(10, var(--cell-h));
     grid-template-rows: repeat(10, var(--cell-size));
+    gap: 0;
 }
 .cell {
     position: relative; width: var(--cell-size); height: var(--cell-h);
@@ -155,7 +158,7 @@ html, body {
     cursor: pointer;
     transition: box-shadow .15s, border-color .15s;
 }
-.board.horizontal-view .cell { width: var(--cell-h); height: var(--cell-size); }
+.board.horizontal-view .cell { width: var(--cell-h); height: var(--cell-size); border-radius: 0; }
 .cell img {
     width: 100%; height: 100%; object-fit: contain;
     pointer-events: none;
@@ -163,7 +166,14 @@ html, body {
     transition: transform .2s;
 }
 .board.horizontal-view .cell img {
-    transform: rotate(90deg);
+    position: absolute;
+    width: var(--cell-size);
+    height: var(--cell-h);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    object-fit: contain;
+    background: white;
 }
 .cell .corner-star {
     position: absolute; inset:0;
@@ -214,7 +224,7 @@ html, body {
     flex-shrink: 0;
     background: var(--bg-card);
     border-top: 1px solid var(--border);
-    padding: .3rem .6rem;
+    padding: .5rem .6rem;
 }
 .hands-row {
     display: flex; align-items: center; justify-content: center;
@@ -237,8 +247,8 @@ html, body {
 .card-back::after { content:'✦'; }
 
 .controls-col {
-    display: flex; flex-direction: column; align-items: center; gap: .2rem;
-    padding: 0 .4rem;
+    display: flex; flex-direction: row; align-items: center; gap: .35rem;
+    padding: 0 .6rem; flex-wrap: wrap; justify-content: center;
 }
 .deck-info { font-size:.65rem; color:var(--text-dim); }
 .deck-info span { color:var(--gold); font-weight:700; }
@@ -247,18 +257,28 @@ html, body {
 .hand-label { display:flex; align-items:center; gap:.3rem; font-size:.75rem; font-weight:600; white-space:nowrap; }
 .label-dot { width:10px; height:10px; border-radius:50%; }
 .my-dot { /* set dynamically */ }
-.hand { display:flex; gap:3px; }
+.hand { display:flex; gap:4px; }
 .hand-card {
-    width: calc(var(--cell-size) * .98);
-    height: calc(var(--cell-size) * 1.4);
-    border-radius: 4px; overflow: hidden;
-    cursor: pointer; transition: all .15s;
+    width: 60px;
+    height: 84px;
+    border-radius: 5px; overflow: hidden;
+    cursor: pointer; transition: all .2s;
     border: 2px solid transparent;
     position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
 .hand-card img { width:100%; height:100%; object-fit:contain; pointer-events:none; background:white; }
-.hand-card:hover { transform: translateY(-4px); border-color: var(--gold); }
-.hand-card.selected { border-color: var(--gold); transform: translateY(-6px); box-shadow: 0 4px 16px var(--gold-glow); }
+.hand-card:hover { transform: translateY(-6px); border-color: var(--gold); box-shadow: 0 6px 18px var(--gold-glow); }
+.hand-card.selected {
+    border: 3px solid #fff;
+    transform: translateY(-10px) scale(1.08);
+    box-shadow: 0 0 0 3px var(--gold), 0 0 25px var(--gold), 0 0 50px rgba(212, 168, 67, .4);
+    animation: selectedCardPulse .8s ease-in-out infinite alternate;
+}
+@keyframes selectedCardPulse {
+    from { box-shadow: 0 0 0 3px var(--gold), 0 0 20px var(--gold), 0 0 40px rgba(212, 168, 67, .3); }
+    to   { box-shadow: 0 0 0 3px #f0c85a, 0 0 35px #f0c85a, 0 0 70px rgba(212, 168, 67, .5); }
+}
 .hand-card.dead-card { opacity:.45; }
 .hand-card .dead-x {
     position:absolute; inset:0;
@@ -320,7 +340,7 @@ html, body {
 /* Jack labels on hand cards */
 .hand-jack-label {
     position:absolute; bottom:2px; left:2px; right:2px;
-    text-align:center; font-size:.5rem; font-weight:800;
+    text-align:center; font-size:.55rem; font-weight:800;
     letter-spacing:.04em; text-transform:uppercase;
     padding:2px 0; border-radius:2px;
     pointer-events:none; z-index:1;
@@ -363,8 +383,9 @@ html, body {
 /* ====================== RESPONSIVE ====================== */
 @media (max-height: 720px) {
     :root { --cell-size: min(4.2vh, 5vw); }
-    .game-header { padding: .2rem .7rem; }
-    .footer-section { padding: .2rem .4rem; }
+    .game-header { padding: .3rem .7rem; }
+    .footer-section { padding: .3rem .4rem; }
+    .hand-card { width: 48px; height: 67px; }
 }
 @media (max-width: 800px) {
     :root { --cell-size: min(8vw, 6vh); }
