@@ -19,8 +19,13 @@ function getCardImageUrl(card) {
     if (!card || card === 'FREE') return null;
     const suit  = card.slice(-1);
     let value   = card.slice(0, -1);
-    if (value === '10') value = '0';
-    return `https://deckofcardsapi.com/static/img/${value}${suit}.png`;
+    const suitMap = { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' };
+    const valueMap = {
+        'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5',
+        '6': '6', '7': '7', '8': '8', '9': '9', '10': '10',
+        'J': 'jack', 'Q': 'queen', 'K': 'king'
+    };
+    return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${valueMap[value]}_of_${suitMap[suit]}.png`;
 }
 
 // ── DOM ─────────────────────────────────────────────────────

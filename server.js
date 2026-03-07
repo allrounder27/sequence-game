@@ -375,7 +375,7 @@ io.on('connection', socket => {
         // Clear any existing timer for this player
         if (room.disconnectTimers[pIdx]) clearTimeout(room.disconnectTimers[pIdx]);
 
-        console.log(`Room ${roomCode}: ${leavingName} disconnected, starting 20s grace period...`);
+        console.log(`Room ${roomCode}: ${leavingName} disconnected, starting 60s grace period...`);
 
         room.disconnectTimers[pIdx] = setTimeout(() => {
             const r = rooms[roomCode];
@@ -383,7 +383,7 @@ io.on('connection', socket => {
             io.to(roomCode).emit('playerLeft', leavingName);
             delete rooms[roomCode];
             console.log(`Room ${roomCode} closed (disconnect timeout for ${leavingName})`);
-        }, 20000);
+        }, 60000);
     });
 
     function broadcastState(room) {
