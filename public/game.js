@@ -25,7 +25,7 @@ function getCardImageUrl(card) {
         '6': '6', '7': '7', '8': '8', '9': '9', '10': '10',
         'J': 'jack', 'Q': 'queen', 'K': 'king'
     };
-    return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${valueMap[value]}_of_${suitMap[suit]}.png`;
+    return `/cards/${valueMap[value]}_of_${suitMap[suit]}.png`;
 }
 
 // ── DOM ─────────────────────────────────────────────────────
