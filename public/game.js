@@ -109,7 +109,20 @@ $('btnCopyCode').addEventListener('click', () => {
 });
 
 $('btnNewGame').addEventListener('click', () => {
+    if (lastState && !lastState.gameOver) {
+        $('newGameModal').classList.add('active');
+    } else {
+        socket.emit('requestNewGame');
+    }
+});
+
+$('btnConfirmNew').addEventListener('click', () => {
+    $('newGameModal').classList.remove('active');
     socket.emit('requestNewGame');
+});
+
+$('btnCancelNew').addEventListener('click', () => {
+    $('newGameModal').classList.remove('active');
 });
 
 $('btnPlayAgain').addEventListener('click', () => {
