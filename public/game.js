@@ -245,7 +245,7 @@ function renderState(state) {
                 lastMoveHighlight = null;
                 const el = gameBoard.querySelector('.last-move-highlight');
                 if (el) el.classList.remove('last-move-highlight');
-            }, 2500);
+            }, 5000);
         }
     } else {
         lastMoveHighlight = null;

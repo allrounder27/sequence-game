@@ -388,7 +388,7 @@ html, body {
 
 /* ====================== LAST MOVE HIGHLIGHT ====================== */
 .cell.last-move-highlight {
-    animation: lastMoveGlow 2.5s ease-out forwards;
+    animation: lastMoveGlow 5s ease-out forwards;
     z-index: 2;
 }
 @keyframes lastMoveGlow {
