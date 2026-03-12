@@ -13,6 +13,8 @@ let myColor       = '#38bdf8';
 let isHorizontalView = false;
 let myRoomCode    = null;
 let myName        = null;
+let lastMoveHighlight = null;
+let lastMoveTimeout   = null;
 
 // ── Card Image Helper ───────────────────────────────────────
 function getCardImageUrl(card) {
@@ -233,6 +235,22 @@ function renderState(state) {
         document.documentElement.style.setProperty('--p2-dark', darkenColor(state.playerColors[1]));
     }
 
+    // Track last move for highlight
+    if (state.lastMove) {
+        const lm = state.lastMove;
+        if (!lastMoveHighlight || lastMoveHighlight.row !== lm.row || lastMoveHighlight.col !== lm.col) {
+            lastMoveHighlight = { row: lm.row, col: lm.col, player: lm.player };
+            if (lastMoveTimeout) clearTimeout(lastMoveTimeout);
+            lastMoveTimeout = setTimeout(() => {
+                lastMoveHighlight = null;
+                const el = gameBoard.querySelector('.last-move-highlight');
+                if (el) el.classList.remove('last-move-highlight');
+            }, 2500);
+        }
+    } else {
+        lastMoveHighlight = null;
+    }
+
     renderBoard(state);
     renderMyHand(state);
     renderOpponentCards(state.opponentCardCount);
@@ -285,6 +303,12 @@ function renderBoard(state) {
             }
 
             cell.addEventListener('click', () => onCellClick(r, c));
+
+            // Last move highlight
+            if (lastMoveHighlight && r === lastMoveHighlight.row && c === lastMoveHighlight.col) {
+                cell.classList.add('last-move-highlight');
+            }
+
             gameBoard.appendChild(cell);
         }
     }
@@ -438,7 +462,13 @@ function showWinModal(state) {
         ? 'Congratulations! You completed 2 sequences!'
         : `${state.players[state.winner]} completed 2 sequences.`;
     winModal.classList.add('active');
-    if (iWon) launchConfetti();
+    if (iWon) {
+        launchConfetti();
+        launchFireworks();
+        playCelebrationSound();
+    } else {
+        playLoseSound();
+    }
 }
 
 // ── Rules Modal ─────────────────────────────────────────────
@@ -450,16 +480,126 @@ window.closeRules = () => $('rulesModal').classList.remove('active');
 
 function launchConfetti() {
     const container = $('confettiContainer');
-    const colors = ['#d4a843','#38bdf8','#fb7185','#4ade80','#a78bfa','#facc15','#f472b6'];
-    for (let i = 0; i < 120; i++) {
+    const colors = ['#d4a843','#38bdf8','#fb7185','#4ade80','#a78bfa','#facc15','#f472b6','#fff'];
+    for (let i = 0; i < 200; i++) {
         const piece = document.createElement('div');
         piece.className = 'confetti-piece';
         piece.style.left = Math.random() * 100 + 'vw';
         piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.setProperty('--fall-time', (2 + Math.random() * 2) + 's');
-        piece.style.animationDelay = Math.random() * 1.5 + 's';
+        piece.style.setProperty('--fall-time', (2 + Math.random() * 3) + 's');
+        piece.style.animationDelay = Math.random() * 2 + 's';
         piece.style.transform = `rotateZ(${Math.random() * 360}deg)`;
+        piece.style.width = (6 + Math.random() * 8) + 'px';
+        piece.style.height = (10 + Math.random() * 14) + 'px';
         container.appendChild(piece);
     }
-    setTimeout(() => { container.innerHTML = ''; }, 5000);
+    setTimeout(() => { container.innerHTML = ''; }, 6000);
+}
+
+// ── Fireworks ───────────────────────────────────────────────
+
+function launchFireworks() {
+    const container = $('confettiContainer');
+    const colors = ['#d4a843','#38bdf8','#fb7185','#4ade80','#a78bfa','#facc15'];
+
+    function burst(x, y, delay) {
+        setTimeout(() => {
+            const count = 30;
+            for (let i = 0; i < count; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'firework-spark';
+                const angle = (Math.PI * 2 * i) / count;
+                const dist = 60 + Math.random() * 80;
+                const dx = Math.cos(angle) * dist;
+                const dy = Math.sin(angle) * dist;
+                spark.style.left = x + 'px';
+                spark.style.top = y + 'px';
+                spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+                spark.style.setProperty('--dx', dx + 'px');
+                spark.style.setProperty('--dy', dy + 'px');
+                container.appendChild(spark);
+            }
+        }, delay);
+    }
+
+    const w = window.innerWidth, h = window.innerHeight;
+    burst(w * 0.25, h * 0.3, 0);
+    burst(w * 0.75, h * 0.25, 400);
+    burst(w * 0.5, h * 0.2, 800);
+    burst(w * 0.3, h * 0.4, 1200);
+    burst(w * 0.7, h * 0.35, 1600);
+}
+
+// ── Celebration Sound (Web Audio API) ───────────────────────
+
+function playCelebrationSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Victory fanfare: ascending arpeggio + final chord
+        const notes = [
+            { freq: 523.25, time: 0, dur: 0.15 },     // C5
+            { freq: 659.25, time: 0.12, dur: 0.15 },   // E5
+            { freq: 783.99, time: 0.24, dur: 0.15 },   // G5
+            { freq: 1046.50, time: 0.4, dur: 0.4 },    // C6 (hold)
+            { freq: 783.99, time: 0.4, dur: 0.4 },     // G5 (chord)
+            { freq: 659.25, time: 0.4, dur: 0.4 },     // E5 (chord)
+        ];
+        notes.forEach(n => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = n.freq;
+            gain.gain.setValueAtTime(0.25, ctx.currentTime + n.time);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.time + n.dur);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + n.time);
+            osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
+        });
+        // Second burst (higher)
+        setTimeout(() => {
+            const notes2 = [
+                { freq: 659.25, time: 0, dur: 0.12 },
+                { freq: 783.99, time: 0.1, dur: 0.12 },
+                { freq: 1046.50, time: 0.2, dur: 0.12 },
+                { freq: 1318.51, time: 0.35, dur: 0.6 },  // E6
+                { freq: 1046.50, time: 0.35, dur: 0.6 },  // C6
+            ];
+            notes2.forEach(n => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = n.freq;
+                gain.gain.setValueAtTime(0.2, ctx.currentTime + n.time);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.time + n.dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + n.time);
+                osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
+            });
+        }, 600);
+    } catch(e) { /* Audio not supported */ }
+}
+
+function playLoseSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [
+            { freq: 392, time: 0, dur: 0.3 },      // G4
+            { freq: 349.23, time: 0.25, dur: 0.3 }, // F4
+            { freq: 329.63, time: 0.5, dur: 0.5 },  // E4
+        ];
+        notes.forEach(n => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = n.freq;
+            gain.gain.setValueAtTime(0.15, ctx.currentTime + n.time);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.time + n.dur);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + n.time);
+            osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
+        });
+    } catch(e) { /* Audio not supported */ }
 }

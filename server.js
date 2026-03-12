@@ -102,7 +102,8 @@ function initGame() {
         currentPlayer: 0,
         completedSequences: [],
         gameOver: false,
-        winner: -1
+        winner: -1,
+        lastMove: null
     };
 }
 
@@ -182,6 +183,7 @@ function stateForPlayer(room, playerIdx) {
         gameOver: g.gameOver,
         winner: g.winner,
         completedSequences: g.completedSequences,
+        lastMove: g.lastMove,
         roomCode: room.code,
         players: room.players.map(p => p.name),
         playerColors: room.players.map(p => p.color)
@@ -290,6 +292,9 @@ io.on('connection', socket => {
         } else {
             g.board[row][col].chip = playerIdx;
         }
+
+        // Track last move for highlighting
+        g.lastMove = { row, col, player: playerIdx };
 
         g.hands[playerIdx].splice(cardIdx, 1);
         if (g.deck.length > 0) g.hands[playerIdx].push(g.deck.pop());

@@ -106,16 +106,17 @@ html, body {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
+    overflow: hidden;
 }
 .header-left, .header-right { min-width: 180px; }
 .header-right { text-align: right; }
-.header-center { text-align: center; flex:1; }
+.header-center { text-align: center; flex:1; min-width: 0; overflow: hidden; }
 .game-title-sm { font-family:'Cinzel',serif; font-size:.95rem; color:var(--gold); letter-spacing:.14em; }
-.turn-row { display:flex; align-items:center; justify-content:center; gap:.4rem; font-size:.78rem; }
-.turn-label { font-weight:600; color: var(--gold); }
-.hdr-sep { color: var(--text-dim); }
-.game-message { color: var(--text-dim); }
-.room-info { font-size:.7rem; color:var(--text-dim); margin-top:.1rem; }
+.turn-row { display:flex; align-items:center; justify-content:center; gap:.4rem; font-size:.78rem; white-space:nowrap; overflow:hidden; }
+.turn-label { font-weight:600; color: var(--gold); flex-shrink:0; }
+.hdr-sep { color: var(--text-dim); flex-shrink:0; }
+.game-message { color: var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.room-info { font-size:.7rem; color:var(--text-dim); margin-top:.1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .room-info span { color:var(--gold); font-weight:700; letter-spacing:.12em; }
 
 .score-box { display:flex; align-items:center; gap:.5rem; }
@@ -385,14 +386,37 @@ html, body {
 .win-title { font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); }
 .win-sub { color:var(--text-dim); margin: .4rem 0 1.2rem; font-size:.9rem; }
 
+/* ====================== LAST MOVE HIGHLIGHT ====================== */
+.cell.last-move-highlight {
+    animation: lastMoveGlow 2.5s ease-out forwards;
+    z-index: 2;
+}
+@keyframes lastMoveGlow {
+    0%   { box-shadow: 0 0 10px 4px rgba(255,215,0,0.95), inset 0 0 8px rgba(255,215,0,0.4); }
+    30%  { box-shadow: 0 0 14px 6px rgba(255,215,0,0.7), inset 0 0 6px rgba(255,215,0,0.3); }
+    100% { box-shadow: 0 0 0 0 transparent, inset 0 0 0 transparent; }
+}
+
 /* ====================== CONFETTI ====================== */
 .confetti-container { position:fixed; inset:0; pointer-events:none; z-index:3000; overflow:hidden; }
 .confetti-piece {
-    position:absolute; width:8px; height:18px; border-radius:2px;
+    position:absolute; border-radius:2px;
     top:-20px; animation: confettiFall var(--fall-time, 3s) linear forwards;
 }
 @keyframes confettiFall {
     to { top:110vh; transform: rotateZ(720deg) rotateX(360deg); opacity:0; }
+}
+
+/* ====================== FIREWORKS ====================== */
+.firework-spark {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    animation: fireworkBurst 0.8s ease-out forwards;
+}
+@keyframes fireworkBurst {
+    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx, 0), var(--dy, 0)) scale(0); opacity: 0; }
 }
 
 /* ====================== RESPONSIVE ====================== */
