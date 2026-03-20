@@ -286,6 +286,9 @@ io.on('connection', socket => {
         const room = rooms[code];
         if (!room) return socket.emit('error', 'Room not found. Check the code.');
         if (room.players.length >= room.maxPlayers) return socket.emit('error', 'Room is full.');
+        // Prevent same socket joining twice
+        if (currentRoom) return socket.emit('error', 'You are already in a room.');
+        if (room.players.some(p => p.id === socket.id)) return socket.emit('error', 'You are already in this room.');
 
         const pIdx = room.players.length;
         room.players.push({ id: socket.id, name: name || `Player ${pIdx + 1}` });

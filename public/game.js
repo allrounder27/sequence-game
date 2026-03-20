@@ -79,11 +79,13 @@ $('btnCreate').addEventListener('click', () => {
 });
 
 $('btnJoinShow').addEventListener('click', () => {
-    if (!nameInput.value.trim()) nameInput.value = 'Player 2';
+    // Copy name from step 1 if already entered
+    const joinNameInput = $('joinNameInput');
+    if (nameInput.value.trim()) joinNameInput.value = nameInput.value.trim();
     lobbyStep1.classList.add('hidden');
     lobbyJoin.classList.remove('hidden');
     lobbyError.classList.add('hidden');
-    setTimeout(() => codeInput.focus(), 100);
+    setTimeout(() => joinNameInput.value ? codeInput.focus() : joinNameInput.focus(), 100);
 });
 
 codeInput?.addEventListener('input', () => {
@@ -103,13 +105,17 @@ $('btnBack').addEventListener('click', () => {
 
 $('btnJoin').addEventListener('click', () => {
     const code = codeInput.value.trim().toUpperCase();
-    const name = nameInput.value.trim() || 'Player 2';
+    const name = $('joinNameInput').value.trim() || 'Player 2';
     if (code.length !== 4) {
         showLobbyError('Enter a 4-letter room code.');
         return;
     }
+    // Prevent double-tap
+    $('btnJoin').disabled = true;
     myName = name;
     socket.emit('joinRoom', { code, name });
+    // Re-enable after short delay in case of error
+    setTimeout(() => { $('btnJoin').disabled = false; }, 2000);
 });
 
 codeInput?.addEventListener('keydown', e => {
