@@ -14,18 +14,19 @@
             <h1 class="lobby-title">✦ SEQUENCE ✦</h1>
             <p class="lobby-sub">Online Multiplayer Card Board Game</p>
 
-            <!-- Step 1: Enter name -->
+            <!-- Step 1: Enter name & choose players -->
             <div class="lobby-step" id="lobbyStep1">
                 <label class="lobby-label">Your Name</label>
                 <input type="text" id="nameInput" class="lobby-input" placeholder="Enter your name" maxlength="16" autocomplete="off">
-                <label class="lobby-label">Token Color</label>
-                <div class="color-picker" id="colorPicker">
-                    <div class="color-swatch selected" data-color="#38bdf8" style="background:#38bdf8" title="Blue"></div>
-                    <div class="color-swatch" data-color="#fb7185" style="background:#fb7185" title="Pink"></div>
-                    <div class="color-swatch" data-color="#4ade80" style="background:#4ade80" title="Green"></div>
-                    <div class="color-swatch" data-color="#a78bfa" style="background:#a78bfa" title="Purple"></div>
-                    <div class="color-swatch" data-color="#fb923c" style="background:#fb923c" title="Orange"></div>
-                    <div class="color-swatch" data-color="#facc15" style="background:#facc15" title="Yellow"></div>
+                <label class="lobby-label">Number of Players</label>
+                <div class="player-count-picker" id="playerCountPicker">
+                    <button class="count-btn selected" data-count="2">2</button>
+                    <button class="count-btn" data-count="3">3</button>
+                    <button class="count-btn" data-count="4">4</button>
+                    <button class="count-btn" data-count="6">6</button>
+                </div>
+                <div class="player-count-info" id="playerCountInfo">
+                    <span>2 players · 2 teams · 7 cards each</span>
                 </div>
                 <div class="lobby-buttons">
                     <button class="btn btn-gold btn-lg" id="btnCreate">Create Game</button>
@@ -33,13 +34,14 @@
                 </div>
             </div>
 
-            <!-- Step 2a: Room created, waiting for opponent -->
+            <!-- Step 2a: Room created, waiting for players -->
             <div class="lobby-step hidden" id="lobbyWaiting">
-                <p class="lobby-label">Share this code with your friend:</p>
+                <p class="lobby-label">Share this code with your friends:</p>
                 <div class="room-code-display" id="roomCodeDisplay">----</div>
                 <button class="btn btn-ghost btn-sm" id="btnCopyCode">📋 Copy Code</button>
+                <div class="lobby-player-list" id="lobbyPlayerList"></div>
                 <div class="waiting-dots">
-                    <span>Waiting for opponent</span>
+                    <span id="waitingText">Waiting for players</span>
                     <span class="dots"></span>
                 </div>
             </div>
@@ -48,6 +50,7 @@
             <div class="lobby-step hidden" id="lobbyJoin">
                 <label class="lobby-label">Enter Room Code</label>
                 <input type="text" id="codeInput" class="lobby-input code-input" placeholder="ABCD" maxlength="4" autocomplete="off">
+                <div class="lobby-room-info hidden" id="lobbyRoomInfo"></div>
                 <button class="btn btn-gold btn-lg" id="btnJoin">Join</button>
                 <button class="btn btn-ghost btn-sm" id="btnBack">← Back</button>
             </div>
@@ -61,14 +64,8 @@
     <div class="game-wrapper hidden" id="gameScreen">
         <!-- Header -->
         <header class="game-header">
-            <div class="header-left">
-                <div class="score-box p1-box" id="p1ScoreBox">
-                    <div class="score-chip p1-chip"></div>
-                    <div class="score-info">
-                        <span class="score-name" id="p1Name">Player 1</span>
-                        <span class="score-seq" id="p1Seq">0 / 2</span>
-                    </div>
-                </div>
+            <div class="header-scores" id="headerScores">
+                <!-- Dynamically populated with team score boxes -->
             </div>
             <div class="header-center">
                 <h1 class="game-title-sm">✦ SEQUENCE ✦</h1>
@@ -79,15 +76,6 @@
                 </div>
                 <div class="room-info">Room: <span id="roomCodeSmall">----</span></div>
             </div>
-            <div class="header-right">
-                <div class="score-box p2-box" id="p2ScoreBox">
-                    <div class="score-chip p2-chip"></div>
-                    <div class="score-info">
-                        <span class="score-name" id="p2Name">Player 2</span>
-                        <span class="score-seq" id="p2Seq">0 / 2</span>
-                    </div>
-                </div>
-            </div>
         </header>
 
         <!-- Board -->
@@ -97,12 +85,11 @@
             </div>
         </main>
 
-        <!-- Footer: My Hand + Opponent info + Controls -->
+        <!-- Footer: My Hand + Other players info + Controls -->
         <footer class="footer-section">
             <div class="hands-row">
-                <div class="opponent-hand-info" id="opponentHandInfo">
-                    <div class="opp-label">Opponent</div>
-                    <div class="opp-cards" id="oppCards"></div>
+                <div class="other-players-info" id="otherPlayersInfo">
+                    <!-- Dynamically populated -->
                 </div>
                 <div class="controls-col">
                     <button class="btn btn-gold" id="btnNewGame">✦ New</button>
@@ -135,7 +122,7 @@
                     <div class="rule-icon-circle">🎯</div>
                     <div class="rule-content">
                         <h3>Objective</h3>
-                        <p>Be the first to complete <strong>2 sequences</strong> — 5 chips in a row horizontally, vertically, or diagonally.</p>
+                        <p>Be the first team to complete <strong>2 sequences</strong> — 5 chips in a row horizontally, vertically, or diagonally.</p>
                     </div>
                 </div>
                 <div class="rule-card">
@@ -144,9 +131,16 @@
                         <h3>Gameplay</h3>
                         <ol>
                             <li>Select a <strong>card</strong> from your hand</li>
-                            <li>Place your <strong>chip</strong> on a matching board space</li>
+                            <li>Place your team's <strong>chip</strong> on a matching board space</li>
                             <li>A new card is drawn &amp; turn passes automatically</li>
                         </ol>
+                    </div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon-circle">👥</div>
+                    <div class="rule-content">
+                        <h3>Teams</h3>
+                        <p><strong>2 players:</strong> 1v1 (7 cards) · <strong>3 players:</strong> FFA (6 cards) · <strong>4 players:</strong> 2v2 (6 cards) · <strong>6 players:</strong> 2v2v2 (5 cards)</p>
                     </div>
                 </div>
                 <div class="rule-card">
@@ -161,7 +155,7 @@
                     <div class="rule-icon-circle">⭐</div>
                     <div class="rule-content">
                         <h3>Free Corners</h3>
-                        <p>The 4 corner <strong>★</strong> spaces count as free for both players.</p>
+                        <p>The 4 corner <strong>★</strong> spaces count as free for all teams.</p>
                     </div>
                 </div>
                 <div class="rule-card">
@@ -201,8 +195,8 @@
     <!-- Disconnected Modal -->
     <div class="modal-overlay" id="disconnectModal">
         <div class="modal-box">
-            <h2 class="modal-title">Opponent Disconnected</h2>
-            <p class="lobby-sub">Your opponent left the game.</p>
+            <h2 class="modal-title">Player Disconnected</h2>
+            <p class="lobby-sub" id="disconnectText">A player left the game.</p>
             <button class="btn btn-gold" onclick="location.reload()">Back to Lobby</button>
         </div>
     </div>

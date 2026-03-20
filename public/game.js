@@ -1,5 +1,6 @@
 /* ============================================================
    SEQUENCE — Multiplayer Client (Socket.IO)
+   Supports 2, 3, 4, 6 players with teams
    ============================================================ */
 
 const socket = io();
@@ -9,12 +10,12 @@ let myIndex       = -1;
 let selectedCard  = -1;
 let validMoves    = [];
 let lastState     = null;
-let myColor       = '#38bdf8';
 let isHorizontalView = false;
 let myRoomCode    = null;
 let myName        = null;
 let lastMoveHighlight = null;
 let lastMoveTimeout   = null;
+let selectedPlayerCount = 2;
 
 // ── Card Image Helper ───────────────────────────────────────
 function getCardImageUrl(card) {
@@ -44,7 +45,6 @@ const roomCodeDisplay  = $('roomCodeDisplay');
 const gameScreen       = $('gameScreen');
 const gameBoard        = $('gameBoard');
 const myHand           = $('myHand');
-const oppCards         = $('oppCards');
 const turnLabel        = $('turnLabel');
 const gameMessage      = $('gameMessage');
 const deckCount        = $('deckCount');
@@ -52,12 +52,30 @@ const roomCodeSmall    = $('roomCodeSmall');
 const winModal         = $('winModal');
 const disconnectModal  = $('disconnectModal');
 
+// ── Player Count Info ───────────────────────────────────────
+const COUNT_INFO = {
+    2: '2 players · 2 teams · 7 cards each',
+    3: '3 players · 3 teams · 6 cards each',
+    4: '4 players · 2 teams · 6 cards each',
+    6: '6 players · 3 teams · 5 cards each'
+};
+
 // ── Lobby Logic ─────────────────────────────────────────────
+
+// Player count picker
+document.querySelectorAll('.count-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedPlayerCount = parseInt(btn.dataset.count);
+        $('playerCountInfo').querySelector('span').textContent = COUNT_INFO[selectedPlayerCount];
+    });
+});
 
 $('btnCreate').addEventListener('click', () => {
     const name = nameInput.value.trim() || 'Player 1';
     myName = name;
-    socket.emit('createRoom', { name, color: myColor });
+    socket.emit('createRoom', { name, maxPlayers: selectedPlayerCount });
 });
 
 $('btnJoinShow').addEventListener('click', () => {
@@ -68,11 +86,12 @@ $('btnJoinShow').addEventListener('click', () => {
     setTimeout(() => codeInput.focus(), 100);
 });
 
-// When code is entered, peek the room to get host color
 codeInput?.addEventListener('input', () => {
     const code = codeInput.value.trim().toUpperCase();
     if (code.length === 4) {
         socket.emit('peekRoom', code);
+    } else {
+        $('lobbyRoomInfo').classList.add('hidden');
     }
 });
 
@@ -90,7 +109,7 @@ $('btnJoin').addEventListener('click', () => {
         return;
     }
     myName = name;
-    socket.emit('joinRoom', { code, name, color: myColor });
+    socket.emit('joinRoom', { code, name });
 });
 
 codeInput?.addEventListener('keydown', e => {
@@ -134,55 +153,52 @@ function showLobbyError(msg) {
     lobbyError.textContent = msg;
     lobbyError.classList.remove('hidden');
 }
-// ── Color Picker ──────────────────────────────────────────────────────
-document.querySelectorAll('.color-swatch').forEach(sw => {
-    sw.addEventListener('click', () => {
-        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
-        sw.classList.add('selected');
-        myColor = sw.dataset.color;
-    });
-});
 
-// ── Toggle View ─────────────────────────────────────────────────────
+// ── Toggle View ─────────────────────────────────────────────
 $('btnToggleView').addEventListener('click', () => {
     isHorizontalView = !isHorizontalView;
     gameBoard.classList.toggle('horizontal-view', isHorizontalView);
     $('btnToggleView').textContent = isHorizontalView ? '🔄 Vertical' : '🔄 Horizontal';
 });
+
 // ── Socket Events ───────────────────────────────────────────
 
-socket.on('roomCreated', ({ code, playerIndex, hostColor }) => {
+socket.on('roomCreated', ({ code, playerIndex, maxPlayers }) => {
     myIndex = playerIndex;
     myRoomCode = code;
     roomCodeDisplay.textContent = code;
     lobbyStep1.classList.add('hidden');
     lobbyWaiting.classList.remove('hidden');
     lobbyError.classList.add('hidden');
+    updateLobbyPlayerList([myName], maxPlayers);
 });
 
-socket.on('roomJoined', ({ code, playerIndex }) => {
+socket.on('roomJoined', ({ code, playerIndex, maxPlayers }) => {
     myIndex = playerIndex;
     myRoomCode = code;
 });
 
-// When joining, server tells us which color the host picked so we can grey it out
-socket.on('hostColor', (hostColor) => {
-    document.querySelectorAll('.color-swatch').forEach(sw => {
-        sw.classList.remove('taken');
-        if (sw.dataset.color === hostColor) {
-            sw.classList.add('taken');
-            // If joiner had the same color selected, pick a different one
-            if (myColor === hostColor) {
-                const available = document.querySelector('.color-swatch:not(.taken):not(.selected)');
-                if (available) {
-                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
-                    available.classList.add('selected');
-                    myColor = available.dataset.color;
-                }
-            }
-        }
-    });
+socket.on('roomInfo', ({ maxPlayers, currentCount, playerNames }) => {
+    const info = $('lobbyRoomInfo');
+    info.classList.remove('hidden');
+    info.textContent = `${maxPlayers}-player game · ${currentCount}/${maxPlayers} joined`;
 });
+
+socket.on('lobbyUpdate', ({ currentCount, maxPlayers, playerNames }) => {
+    updateLobbyPlayerList(playerNames, maxPlayers);
+    $('waitingText').textContent = `Waiting for players (${currentCount}/${maxPlayers})`;
+});
+
+function updateLobbyPlayerList(names, maxPlayers) {
+    const list = $('lobbyPlayerList');
+    list.innerHTML = '';
+    for (let i = 0; i < maxPlayers; i++) {
+        const div = document.createElement('div');
+        div.className = 'lobby-player-item' + (i < names.length ? ' joined' : '');
+        div.textContent = i < names.length ? names[i] : `Waiting...`;
+        list.appendChild(div);
+    }
+}
 
 socket.on('error', msg => {
     showLobbyError(msg);
@@ -210,12 +226,12 @@ socket.on('message', msg => {
 });
 
 socket.on('playerLeft', name => {
+    $('disconnectText').textContent = `${name} left the game.`;
     disconnectModal.classList.add('active');
 });
 
 // ── Auto-Rejoin on Reconnect ─────────────────────────────────
 socket.on('connect', () => {
-    // If we were in a game, try to rejoin the room
     if (myRoomCode && myName && gameScreen && !gameScreen.classList.contains('hidden')) {
         console.log('Reconnected — attempting rejoin room', myRoomCode);
         socket.emit('rejoinRoom', { code: myRoomCode, name: myName });
@@ -240,19 +256,19 @@ function renderState(state) {
     selectedCard = -1;
     validMoves = [];
 
-    // Apply player-chosen colors
-    if (state.playerColors && state.playerColors.length === 2) {
-        document.documentElement.style.setProperty('--p1', state.playerColors[0]);
-        document.documentElement.style.setProperty('--p2', state.playerColors[1]);
-        document.documentElement.style.setProperty('--p1-dark', darkenColor(state.playerColors[0]));
-        document.documentElement.style.setProperty('--p2-dark', darkenColor(state.playerColors[1]));
+    // Set team color CSS variables
+    if (state.teamColors) {
+        state.teamColors.forEach((color, i) => {
+            document.documentElement.style.setProperty(`--team${i}`, color);
+            document.documentElement.style.setProperty(`--team${i}-dark`, darkenColor(color));
+        });
     }
 
     // Track last move for highlight
     if (state.lastMove) {
         const lm = state.lastMove;
         if (!lastMoveHighlight || lastMoveHighlight.row !== lm.row || lastMoveHighlight.col !== lm.col) {
-            lastMoveHighlight = { row: lm.row, col: lm.col, player: lm.player };
+            lastMoveHighlight = { row: lm.row, col: lm.col };
             if (lastMoveTimeout) clearTimeout(lastMoveTimeout);
             lastMoveTimeout = setTimeout(() => {
                 lastMoveHighlight = null;
@@ -266,10 +282,9 @@ function renderState(state) {
 
     renderBoard(state);
     renderMyHand(state);
-    renderOpponentCards(state.opponentCardCount);
+    renderOtherPlayers(state);
     renderHeader(state);
 
-    // Win check
     if (state.gameOver) {
         showWinModal(state);
     }
@@ -286,7 +301,6 @@ function renderBoard(state) {
 
             const data = state.board[r][c];
 
-            // Card image or corner
             if (data.card === 'FREE') {
                 cell.innerHTML = '<div class="corner-star">★</div>';
             } else {
@@ -304,12 +318,12 @@ function renderBoard(state) {
                 cell.appendChild(img);
             }
 
-            // Chip overlay
+            // Chip overlay — chip value is now the team index
             if (data.chip !== null) {
                 const overlay = document.createElement('div');
                 overlay.className = 'chip-overlay';
                 const chip = document.createElement('div');
-                chip.className = `chip chip-p${data.chip + 1}`;
+                chip.className = `chip chip-team${data.chip}`;
                 if (data.inSequence) chip.classList.add('chip-seq');
                 overlay.appendChild(chip);
                 cell.appendChild(overlay);
@@ -317,7 +331,6 @@ function renderBoard(state) {
 
             cell.addEventListener('click', () => onCellClick(r, c));
 
-            // Last move highlight
             if (lastMoveHighlight && r === lastMoveHighlight.row && c === lastMoveHighlight.col) {
                 cell.classList.add('last-move-highlight');
             }
@@ -347,7 +360,6 @@ function renderMyHand(state) {
         };
         div.appendChild(img);
 
-        // Jack labels
         if (card === 'JD' || card === 'JC') {
             const label = document.createElement('div');
             label.className = 'hand-jack-label wild-badge';
@@ -360,7 +372,6 @@ function renderMyHand(state) {
             div.appendChild(label);
         }
 
-        // Check dead card
         const dead = isCardDead(state.board, card);
         if (dead) {
             div.classList.add('dead-card');
@@ -381,48 +392,110 @@ function renderMyHand(state) {
         myHand.appendChild(div);
     });
 
-    // Update hand label
-    const color = state.myIndex === 0 ? 'var(--p1)' : 'var(--p2)';
-    $('myDot').style.background = color;
-    $('myDot').style.boxShadow = `0 0 6px ${color}`;
+    // Update hand label with team color
+    const myTeamColor = state.teamColors[state.myTeam];
+    $('myDot').style.background = myTeamColor;
+    $('myDot').style.boxShadow = `0 0 6px ${myTeamColor}`;
     $('myHandLabel').textContent = state.players[state.myIndex] + ' (You)';
 }
 
-function renderOpponentCards(count) {
-    oppCards.innerHTML = '';
-    for (let i = 0; i < count; i++) {
-        const cb = document.createElement('div');
-        cb.className = 'card-back';
-        oppCards.appendChild(cb);
-    }
+function renderOtherPlayers(state) {
+    const container = $('otherPlayersInfo');
+    container.innerHTML = '';
+
+    state.otherPlayers.forEach(op => {
+        const div = document.createElement('div');
+        div.className = 'other-player-info';
+
+        const teamColor = state.teamColors[op.team];
+        const dot = document.createElement('div');
+        dot.className = 'opp-dot';
+        dot.style.background = teamColor;
+        dot.style.boxShadow = `0 0 4px ${teamColor}`;
+
+        const label = document.createElement('div');
+        label.className = 'opp-label';
+        label.textContent = op.name;
+
+        const cards = document.createElement('div');
+        cards.className = 'opp-cards';
+        for (let i = 0; i < op.cardCount; i++) {
+            const cb = document.createElement('div');
+            cb.className = 'card-back';
+            cards.appendChild(cb);
+        }
+
+        div.appendChild(dot);
+        div.appendChild(label);
+        div.appendChild(cards);
+        container.appendChild(div);
+    });
 }
 
 function renderHeader(state) {
-    $('p1Name').textContent = state.players[0] || 'Player 1';
-    $('p2Name').textContent = state.players[1] || 'Player 2';
-    $('p1Seq').textContent = `${state.sequences[0]} / 2`;
-    $('p2Seq').textContent = `${state.sequences[1]} / 2`;
+    const scoresContainer = $('headerScores');
+    scoresContainer.innerHTML = '';
+
+    // Build one score box per team
+    for (let t = 0; t < state.numTeams; t++) {
+        const box = document.createElement('div');
+        box.className = 'score-box';
+
+        const chip = document.createElement('div');
+        chip.className = 'score-chip';
+        chip.style.background = state.teamColors[t];
+        chip.style.boxShadow = `0 0 6px ${state.teamColors[t]}`;
+
+        const info = document.createElement('div');
+        info.className = 'score-info';
+
+        // Get team member names
+        const members = [];
+        for (let i = 0; i < state.numPlayers; i++) {
+            if (state.teams[i] === t) members.push(state.players[i]);
+        }
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'score-name';
+        nameEl.textContent = state.teamNames[t];
+        nameEl.title = members.join(', ');
+
+        const seqEl = document.createElement('span');
+        seqEl.className = 'score-seq';
+        seqEl.textContent = `${state.sequences[t]} / 2`;
+
+        info.appendChild(nameEl);
+        info.appendChild(seqEl);
+        box.appendChild(chip);
+        box.appendChild(info);
+
+        // Dim teams that are not current player's team
+        const currentTeam = state.teams[state.currentPlayer];
+        box.style.opacity = t === currentTeam ? '1' : '.5';
+
+        scoresContainer.appendChild(box);
+    }
+
     deckCount.textContent = state.deckCount;
     roomCodeSmall.textContent = state.roomCode;
 
     if (state.gameOver) {
-        turnLabel.textContent = state.winner === state.myIndex ? 'You Win!' : 'You Lose';
+        const myTeamWon = state.winner === state.myTeam;
+        turnLabel.textContent = myTeamWon ? 'You Win!' : 'You Lose';
     } else if (state.currentPlayer === state.myIndex) {
         turnLabel.textContent = 'Your Turn';
         turnLabel.style.color = 'var(--gold)';
     } else {
-        turnLabel.textContent = 'Opponent\'s Turn';
-        turnLabel.style.color = 'var(--text-dim)';
+        const currentName = state.players[state.currentPlayer];
+        const currentTeam = state.teams[state.currentPlayer];
+        if (currentTeam === state.myTeam) {
+            turnLabel.textContent = `${currentName}'s Turn (Teammate)`;
+            turnLabel.style.color = state.teamColors[state.myTeam];
+        } else {
+            turnLabel.textContent = `${currentName}'s Turn`;
+            turnLabel.style.color = 'var(--text-dim)';
+        }
     }
-
-    // Highlight active player score box
-    $('p1ScoreBox').style.opacity = state.currentPlayer === 0 ? '1' : '.5';
-    $('p2ScoreBox').style.opacity = state.currentPlayer === 1 ? '1' : '.5';
-
-    // Opponent label
-    const oppIdx = 1 - state.myIndex;
-    const oppName = state.players[oppIdx] || 'Opponent';
-    document.querySelector('.opp-label').textContent = oppName;
 }
 
 function highlightValidMoves() {
@@ -468,14 +541,27 @@ function isCardDead(board, card) {
 // ── Win Modal ───────────────────────────────────────────────
 
 function showWinModal(state) {
-    const iWon = state.winner === state.myIndex;
-    $('winEmoji').textContent = iWon ? '🏆' : '😔';
-    $('winTitle').textContent = iWon ? 'You Win!' : 'You Lose';
-    $('winSubtext').textContent = iWon
-        ? 'Congratulations! You completed 2 sequences!'
-        : `${state.players[state.winner]} completed 2 sequences.`;
+    const myTeamWon = state.winner === state.myTeam;
+    $('winEmoji').textContent = myTeamWon ? '🏆' : '😔';
+    $('winTitle').textContent = myTeamWon ? 'You Win!' : 'You Lose';
+
+    if (myTeamWon) {
+        // Get teammates
+        const teammates = [];
+        for (let i = 0; i < state.numPlayers; i++) {
+            if (state.teams[i] === state.myTeam) teammates.push(state.players[i]);
+        }
+        $('winSubtext').textContent = `Team ${state.teamNames[state.winner]} wins! (${teammates.join(', ')})`;
+    } else {
+        const winners = [];
+        for (let i = 0; i < state.numPlayers; i++) {
+            if (state.teams[i] === state.winner) winners.push(state.players[i]);
+        }
+        $('winSubtext').textContent = `Team ${state.teamNames[state.winner]} wins! (${winners.join(', ')})`;
+    }
+
     winModal.classList.add('active');
-    if (iWon) {
+    if (myTeamWon) {
         launchConfetti();
         launchFireworks();
         playCelebrationSound();
@@ -548,14 +634,13 @@ function launchFireworks() {
 function playCelebrationSound() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        // Victory fanfare: ascending arpeggio + final chord
         const notes = [
-            { freq: 523.25, time: 0, dur: 0.15 },     // C5
-            { freq: 659.25, time: 0.12, dur: 0.15 },   // E5
-            { freq: 783.99, time: 0.24, dur: 0.15 },   // G5
-            { freq: 1046.50, time: 0.4, dur: 0.4 },    // C6 (hold)
-            { freq: 783.99, time: 0.4, dur: 0.4 },     // G5 (chord)
-            { freq: 659.25, time: 0.4, dur: 0.4 },     // E5 (chord)
+            { freq: 523.25, time: 0, dur: 0.15 },
+            { freq: 659.25, time: 0.12, dur: 0.15 },
+            { freq: 783.99, time: 0.24, dur: 0.15 },
+            { freq: 1046.50, time: 0.4, dur: 0.4 },
+            { freq: 783.99, time: 0.4, dur: 0.4 },
+            { freq: 659.25, time: 0.4, dur: 0.4 },
         ];
         notes.forEach(n => {
             const osc = ctx.createOscillator();
@@ -569,14 +654,13 @@ function playCelebrationSound() {
             osc.start(ctx.currentTime + n.time);
             osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
         });
-        // Second burst (higher)
         setTimeout(() => {
             const notes2 = [
                 { freq: 659.25, time: 0, dur: 0.12 },
                 { freq: 783.99, time: 0.1, dur: 0.12 },
                 { freq: 1046.50, time: 0.2, dur: 0.12 },
-                { freq: 1318.51, time: 0.35, dur: 0.6 },  // E6
-                { freq: 1046.50, time: 0.35, dur: 0.6 },  // C6
+                { freq: 1318.51, time: 0.35, dur: 0.6 },
+                { freq: 1046.50, time: 0.35, dur: 0.6 },
             ];
             notes2.forEach(n => {
                 const osc = ctx.createOscillator();
@@ -598,9 +682,9 @@ function playLoseSound() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const notes = [
-            { freq: 392, time: 0, dur: 0.3 },      // G4
-            { freq: 349.23, time: 0.25, dur: 0.3 }, // F4
-            { freq: 329.63, time: 0.5, dur: 0.5 },  // E4
+            { freq: 392, time: 0, dur: 0.3 },
+            { freq: 349.23, time: 0.25, dur: 0.3 },
+            { freq: 329.63, time: 0.5, dur: 0.5 },
         ];
         notes.forEach(n => {
             const osc = ctx.createOscillator();

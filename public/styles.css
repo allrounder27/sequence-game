@@ -6,10 +6,12 @@
     --bg-hover:    #243054;
     --gold:        #d4a843;
     --gold-glow:   rgba(212, 168, 67, .35);
-    --p1:          #38bdf8;
-    --p1-dark:     #0c4a6e;
-    --p2:          #fb7185;
-    --p2-dark:     #6e0c2b;
+    --team0:       #fb7185;  /* Red */
+    --team1:       #4ade80;  /* Green */
+    --team2:       #38bdf8;  /* Blue */
+    --team0-dark:  #6e0c2b;
+    --team1-dark:  #0c6e2b;
+    --team2-dark:  #0c4a6e;
     --text:        #e8e4dc;
     --text-dim:    #8892a8;
     --border:      rgba(212, 168, 67, .18);
@@ -62,6 +64,47 @@ html, body {
 .lobby-error { color: #ef4444; font-size: .85rem; margin-top: .7rem; }
 .hidden { display: none !important; }
 
+/* Player count picker */
+.player-count-picker {
+    display: flex; gap: .5rem; justify-content: center; margin-bottom: .5rem;
+}
+.count-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--bg-surface); color: var(--text);
+    border: 2px solid var(--border); cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
+    transition: all .18s;
+}
+.count-btn:hover { border-color: var(--gold); background: var(--bg-hover); }
+.count-btn.selected {
+    border-color: var(--gold); background: var(--gold);
+    color: #0b1120; box-shadow: 0 0 12px var(--gold-glow);
+}
+.player-count-info {
+    font-size: .75rem; color: var(--text-dim); margin-bottom: .8rem;
+}
+
+/* Lobby player list */
+.lobby-player-list {
+    display: flex; flex-direction: column; gap: .3rem; margin: .8rem 0;
+}
+.lobby-player-item {
+    padding: .4rem .8rem; border-radius: var(--radius);
+    background: var(--bg-surface); color: var(--text-dim);
+    font-size: .82rem;
+}
+.lobby-player-item.joined {
+    color: var(--gold); font-weight: 600;
+    border-left: 3px solid var(--gold);
+}
+
+/* Lobby room info for joiner */
+.lobby-room-info {
+    font-size: .78rem; color: var(--gold); margin-bottom: .6rem;
+    padding: .4rem; background: var(--bg-surface);
+    border-radius: var(--radius);
+}
+
 /* Room code display */
 .room-code-display {
     font-family: 'Cinzel', serif; font-size: 2.8rem; font-weight: 900;
@@ -107,9 +150,12 @@ html, body {
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     overflow: hidden;
+    gap: .5rem;
 }
-.header-left, .header-right { min-width: 180px; }
-.header-right { text-align: right; }
+.header-scores {
+    display: flex; align-items: center; gap: .6rem;
+    flex-shrink: 0;
+}
 .header-center { text-align: center; flex:1; min-width: 0; overflow: hidden; }
 .game-title-sm { font-family:'Cinzel',serif; font-size:.95rem; color:var(--gold); letter-spacing:.14em; }
 .turn-row { display:flex; align-items:center; justify-content:center; gap:.4rem; font-size:.78rem; white-space:nowrap; overflow:hidden; }
@@ -119,17 +165,23 @@ html, body {
 .room-info { font-size:.7rem; color:var(--text-dim); margin-top:.1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .room-info span { color:var(--gold); font-weight:700; letter-spacing:.12em; }
 
-.score-box { display:flex; align-items:center; gap:.5rem; }
+.score-box { display:flex; align-items:center; gap:.4rem; }
 .score-chip {
-    width: 18px; height: 18px; border-radius: 50%;
+    width: 16px; height: 16px; border-radius: 50%;
     border: 2px solid rgba(255,255,255,.3);
+    flex-shrink: 0;
 }
-.p1-chip { background: var(--p1); box-shadow: 0 0 6px var(--p1); }
-.p2-chip { background: var(--p2); box-shadow: 0 0 6px var(--p2); }
 .score-info { display:flex; flex-direction:column; line-height:1.15; }
-.score-name { font-weight:600; font-size:.78rem; }
-.score-seq  { font-size:.7rem; color:var(--text-dim); }
-.p2-box { flex-direction: row-reverse; }
+.score-name { font-weight:600; font-size:.72rem; white-space:nowrap; }
+.score-seq  { font-size:.65rem; color:var(--text-dim); }
+
+/* Team chip colors (dynamic via CSS vars) */
+.chip-team0 { background: var(--team0); box-shadow: 0 0 8px var(--team0); }
+.chip-team1 { background: var(--team1); box-shadow: 0 0 8px var(--team1); }
+.chip-team2 { background: var(--team2); box-shadow: 0 0 8px var(--team2); }
+
+.chip-seq { border-width: 3px; border-color: var(--gold); animation: seqGlow 1.5s ease-in-out infinite alternate; }
+@keyframes seqGlow { from { box-shadow: 0 0 8px var(--gold-glow); } to { box-shadow: 0 0 18px var(--gold); } }
 
 /* ====================== BOARD ====================== */
 .board-section { flex:1; display:flex; align-items:center; justify-content:center; padding:.3rem; overflow:hidden; }
@@ -146,7 +198,6 @@ html, body {
     grid-template-rows: repeat(10, var(--cell-h));
     gap: 1px;
 }
-/* Horizontal mode: bigger cells, rotated card images, no gap */
 .board.horizontal-view {
     --cell-size: min(6.5vh, 6vw);
     --cell-h: calc(var(--cell-size) * 1.4);
@@ -198,12 +249,8 @@ html, body {
     animation: chipDrop .25s ease-out;
 }
 @keyframes chipDrop { from { transform: scale(0); } to { transform: scale(1); } }
-.chip-p1 { background: var(--p1); box-shadow: 0 0 8px var(--p1); }
-.chip-p2 { background: var(--p2); box-shadow: 0 0 8px var(--p2); }
-.chip-seq { border-width: 3px; border-color: var(--gold); animation: seqGlow 1.5s ease-in-out infinite alternate; }
-@keyframes seqGlow { from { box-shadow: 0 0 8px var(--gold-glow); } to { box-shadow: 0 0 18px var(--gold); } }
 
-/* Highlight for valid moves — bright pulsing glow matching hand-card style */
+/* Highlight for valid moves */
 .cell.valid-move {
     box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--gold), 0 0 20px var(--gold), 0 0 40px rgba(212, 168, 67, .4);
     z-index: 2;
@@ -219,10 +266,7 @@ html, body {
     animation: none;
 }
 
-/* Dead card highlight */
-.cell.dead-card-highlight { box-shadow: inset 0 0 0 2px #ef4444, 0 0 12px rgba(239,68,68,.4); }
-
-/* Card image fallback when CDN fails */
+/* Card image fallback */
 .card-text-fallback {
     display: flex; align-items: center; justify-content: center;
     width: 100%; height: 100%;
@@ -246,19 +290,26 @@ html, body {
     display: flex; align-items: center; justify-content: center;
     gap: .5rem;
 }
-.opponent-hand-info {
+.other-players-info {
     display: flex; flex-direction: column; align-items: center;
-    min-width: 120px;
+    gap: .2rem; min-width: 90px;
 }
-.opp-label { font-size:.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.15rem; }
-.opp-cards { display:flex; gap: 2px; }
+.other-player-info {
+    display: flex; align-items: center; gap: .3rem;
+    font-size: .65rem;
+}
+.opp-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.opp-label { color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; font-size:.6rem; }
+.opp-cards { display:flex; gap: 1px; }
 .card-back {
-    width: 28px; height: 40px;
+    width: 18px; height: 26px;
     background: linear-gradient(135deg, #1a3a5c, #0c2340);
     border: 1px solid #2d5a8a;
-    border-radius: 3px;
+    border-radius: 2px;
     display: flex; align-items:center; justify-content:center;
-    font-size: .6rem; color: #2d5a8a;
+    font-size: .45rem; color: #2d5a8a;
 }
 .card-back::after { content:'✦'; }
 
@@ -327,7 +378,7 @@ html, body {
 .modal-close:hover { color:var(--text); }
 .modal-title { font-family:'Cinzel',serif; font-size:1.3rem; color:var(--gold); margin-bottom:1rem; }
 
-/* Rules Modal — Redesigned */
+/* Rules Modal */
 .rules-modal-box { width:480px; max-width:92vw; padding:0; overflow-y:auto; max-height:88vh; }
 .rules-header-section { background:linear-gradient(135deg, var(--bg-surface), var(--bg-dark)); padding:1.2rem 2rem .6rem; text-align:center; flex-shrink:0; }
 .rules-emblem { font-size:2rem; margin-bottom:.2rem; }
@@ -360,24 +411,6 @@ html, body {
     letter-spacing:.04em; text-transform:uppercase;
     padding:2px 0; border-radius:2px;
     pointer-events:none; z-index:1;
-}
-
-/* Color Picker */
-.color-picker { display:flex; gap:.5rem; justify-content:center; margin-bottom:.9rem; }
-.color-swatch {
-    width:30px; height:30px; border-radius:50%; cursor:pointer;
-    border:3px solid transparent; transition:all .15s;
-    position:relative;
-}
-.color-swatch:hover { transform:scale(1.15); }
-.color-swatch.selected { border-color:var(--gold); box-shadow:0 0 12px var(--gold-glow); transform:scale(1.1); }
-.color-swatch.taken {
-    opacity:.25; cursor:not-allowed; pointer-events:none;
-}
-.color-swatch.taken::after {
-    content:'\2715'; position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    font-size:.7rem; font-weight:900; color:white;
 }
 
 /* Win */
@@ -430,21 +463,20 @@ html, body {
 /* Mobile portrait */
 @media (max-width: 800px) {
     :root { --cell-size: min(8.5vw, 4.5vh); }
-    .game-header { padding: .25rem .5rem; }
-    .header-left, .header-right { min-width: 70px; }
+    .game-header { padding: .25rem .5rem; flex-wrap: wrap; justify-content: center; }
+    .header-scores { gap: .4rem; }
+    .score-name { font-size: .6rem; }
+    .score-seq { font-size: .55rem; }
+    .score-chip { width: 12px; height: 12px; }
     .game-title-sm { font-size: .75rem; }
-    .score-name { font-size: .65rem; }
-    .score-seq { font-size: .6rem; }
-    .score-chip { width: 14px; height: 14px; }
     .turn-row { font-size: .68rem; }
     .room-info { font-size: .6rem; }
     .board-section { padding: .15rem; }
     .board-frame { padding: 2px; }
     .footer-section { padding: .3rem .3rem; }
     .hands-row { flex-direction: column; gap: .25rem; }
-    .opponent-hand-info { flex-direction: row; gap: .4rem; min-width: auto; }
-    .opp-label { margin-bottom: 0; font-size: .6rem; }
-    .card-back { width: 20px; height: 28px; }
+    .other-players-info { flex-direction: row; gap: .4rem; min-width: auto; flex-wrap: wrap; justify-content: center; }
+    .card-back { width: 14px; height: 20px; }
     .controls-col { flex-direction: row; gap: .3rem; padding: 0; }
     .controls-col .btn { padding: .3rem .5rem; font-size: .65rem; }
     .deck-info { font-size: .55rem; }
@@ -460,5 +492,5 @@ html, body {
 @media (max-width: 400px) {
     :root { --cell-size: min(8.8vw, 4vh); }
     .hand-card { width: 36px; height: 50px; }
-    .opponent-hand-info { display: none; }
+    .other-players-info { display: none; }
 }
